@@ -22,7 +22,7 @@ async function readSource(src) {
 }
 
 // Accept both the compact schema (what `view` emits) and full-form field names
-// (what an agent might copy from a raw element), so either works.
+// (what you'd copy from `get`), so either works.
 function normalize(rec) {
   const n = { ...rec };
   if (n.w === undefined) n.w = rec.width;
@@ -31,6 +31,25 @@ function normalize(rec) {
   if (n.from === undefined) n.from = rec.startBinding?.elementId;
   if (n.to === undefined) n.to = rec.endBinding?.elementId;
   return n;
+}
+
+// Whether the record specifies arrow geometry itself (so we must NOT recompute).
+const hasGeometry = (rec) => Array.isArray(rec.points);
+
+// Write arrow-specific fields verbatim: honor a full binding object (with
+// fixedPoint/mode) if given, else build a simple binding from from/to; keep any
+// points/elbowed/arrowheads the caller provided.
+function applyArrowFields(el, rec) {
+  if (rec.startBinding) el.startBinding = rec.startBinding;
+  else if (rec.from !== undefined)
+    el.startBinding = { elementId: rec.from, focus: 0, gap: 4 };
+  if (rec.endBinding) el.endBinding = rec.endBinding;
+  else if (rec.to !== undefined)
+    el.endBinding = { elementId: rec.to, focus: 0, gap: 4 };
+  if (rec.points) el.points = rec.points;
+  if (rec.elbowed !== undefined) el.elbowed = rec.elbowed;
+  if (rec.startArrowhead !== undefined) el.startArrowhead = rec.startArrowhead;
+  if (rec.endArrowhead !== undefined) el.endArrowhead = rec.endArrowhead;
 }
 
 // Set/replace a shape's bound text label (creates the text element if needed).
@@ -54,10 +73,7 @@ function updateExisting(scene, el, rec) {
   if (rec.frame !== undefined) el.frameId = rec.frame;
 
   if (el.type === "arrow") {
-    if (rec.from !== undefined)
-      el.startBinding = { elementId: rec.from, focus: 0, gap: 4 };
-    if (rec.to !== undefined)
-      el.endBinding = { elementId: rec.to, focus: 0, gap: 4 };
+    applyArrowFields(el, rec);
   } else if (el.type === "frame") {
     if (rec.name !== undefined) el.name = rec.name;
   } else if (el.type === "text") {
@@ -73,7 +89,11 @@ function updateExisting(scene, el, rec) {
 
 function createNew(scene, rec) {
   if (rec.type === "arrow") {
-    scene.elements.push(makeArrow({ id: rec.id, from: rec.from, to: rec.to }));
+    const arrow = makeArrow({ id: rec.id, from: rec.from, to: rec.to });
+    applyArrowFields(arrow, rec);
+    if (rec.x !== undefined) arrow.x = rec.x;
+    if (rec.y !== undefined) arrow.y = rec.y;
+    scene.elements.push(arrow);
     return;
   }
   if (SHAPE_TYPES.has(rec.type)) {
@@ -114,7 +134,7 @@ function createNew(scene, rec) {
 }
 
 export const summary =
-  'apply compact JSONL edits back to the file (patch by id; {"delete":true} to remove)';
+  'apply JSONL edits back to the file (merge by id; {"delete":true} to remove)';
 export const usage =
   "excalisketch tool apply <file.excalidraw> [patch.jsonl | -]";
 
@@ -131,8 +151,9 @@ export async function run(args) {
   const scene = await readScene(file);
   const byId = new Map(scene.elements.map((e) => [e.id, e]));
 
-  // arrows we create or re-bind — only these get their geometry (re)computed
-  const touchedArrows = new Set();
+  // A new/re-bound arrow with NO points of its own gets a straight default.
+  // Arrows that bring their own `points` are left exactly as given.
+  const needStraight = new Set();
 
   for (const rec of records) {
     if (!rec.id) throw new Error(`record missing id: ${JSON.stringify(rec)}`);
@@ -152,21 +173,18 @@ export async function run(args) {
     }
 
     if (el) {
-      if (
-        el.type === "arrow" &&
-        (rec.from !== undefined || rec.to !== undefined)
-      ) {
-        touchedArrows.add(el.id);
-      }
+      const rebinds =
+        el.type === "arrow" && (rec.from !== undefined || rec.to !== undefined);
+      if (rebinds && !hasGeometry(rec)) needStraight.add(el.id);
       updateExisting(scene, el, rec);
     } else {
-      if (rec.type === "arrow") touchedArrows.add(rec.id);
+      if (rec.type === "arrow" && !hasGeometry(rec)) needStraight.add(rec.id);
       createNew(scene, rec);
     }
   }
 
-  reconcile(scene); // rebuild bindings/boundElements, prune dangling
-  recomputeArrows(scene, touchedArrows); // geometry ONLY for arrows we touched
+  reconcile(scene); // keep boundElements mirrored + drop dangling arrows
+  recomputeArrows(scene, needStraight); // straight default ONLY where no points given
 
   const problems = validate(scene);
   if (problems.length) {
