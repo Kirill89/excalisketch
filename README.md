@@ -54,28 +54,33 @@ Both are ignored by Excalidraw and safe to remove.
 
 ### Tools for AI agents
 
-Editing raw `.excalidraw` JSON by hand is error-prone — arrow bindings must be
-mirrored into both endpoints, ids/indices fabricated, text measured. Instead,
-run the headless tools; they own that bookkeeping and print to stdout:
+A `.excalidraw` file is large and verbose. These headless tools let an agent
+read and edit it compactly, without loading the whole JSON or hand-managing ids,
+indices, and arrow bindings. They print to stdout and exit.
 
 ```bash
-npx excalisketch tool                     # list the tools
-npx excalisketch tool graph <file> [--xy] # read as nodes/edges + DOT (--xy shows positions/frames)
-npx excalisketch tool validate <file>     # check bindings/indices/refs (nonzero exit on problems)
-npx excalisketch tool from-mermaid <in.mmd|-> --out <file>   # Mermaid      -> .excalidraw
-npx excalisketch tool from-dot     <in.dot|-> --out <file>   # Graphviz DOT -> .excalidraw
-npx excalisketch tool add-node <file> --label <text> [--shape rectangle|ellipse|diamond] [--near <id> | --x <n> --y <n>]
-npx excalisketch tool add-edge <file> --from <id> --to <id> [--label <text>] [--undirected]
+npx excalisketch tool                       # list the tools
+npx excalisketch tool view <file>           # whole diagram as compact JSONL (id/type/coords/text/edges)
+npx excalisketch tool get  <file> <id...>   # full element(s), incl. styles
+npx excalisketch tool apply <file> <patch.jsonl | ->   # write edits back by id
+npx excalisketch tool arrange <file>        # auto-layout the graph (Graphviz, bundled)
+npx excalisketch tool validate <file>       # check bindings/indices/refs (nonzero exit on problems)
 ```
 
-- **Read** with `graph` — styleless topology + labels, and the equivalent DOT.
-- **Create** with `from-mermaid` / `from-dot` — write the graph in a language
-  you already know; layout and all Excalidraw bookkeeping are generated for you.
-- **Edit** in place with `add-node` / `add-edge` — arrow bindings are mirrored
-  into both endpoints automatically.
-- **Check** with `validate`.
+The core loop is **view → edit → apply**:
 
-`from-*` create/replace a whole file; `add-*` modify one in place.
+1. `view` projects each element to one compact line — style dropped, coordinates
+   kept, a shape's label folded into its `text`. On a real diagram this is ~8% of
+   the raw file, so it fits in context cheaply.
+2. Edit those lines: change a field, add a new element (nodes/edges — ids and
+   bindings are generated for you), or remove one with `{"id":"X","delete":true}`.
+3. `apply` merges the patch back **by id**, preserving every field you didn't
+   touch (styles, frames, images stay intact), then re-derives all arrow
+   bindings and refuses to write if the result is inconsistent.
+
+Use `get` when you need an element's full detail (e.g. to copy a style), and
+`arrange` when you have topology but no positions. Direct JSON edits are fine
+too — just run `validate` afterward.
 
 ## Development
 

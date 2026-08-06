@@ -1,17 +1,16 @@
 // Registry of agent tools. Each tool exports { summary, usage, run }.
-import * as graph from "./graph.js";
+import * as view from "./view.js";
+import * as get from "./get.js";
+import * as apply from "./apply.js";
 import * as validate from "./validate.js";
-import * as fromMermaid from "./from-mermaid.js";
-import * as fromDot from "./from-dot.js";
-import { addNode, addEdge } from "./add.js";
+import * as arrange from "./arrange.js";
 
 const TOOLS = {
-  graph,
-  "from-mermaid": fromMermaid,
-  "from-dot": fromDot,
-  "add-node": addNode,
-  "add-edge": addEdge,
+  view,
+  get,
+  apply,
   validate,
+  arrange,
 };
 
 export function toolNames() {
@@ -21,7 +20,7 @@ export function toolNames() {
 export function listTools() {
   console.log("excalisketch tools — run: excalisketch tool <name> [args...]\n");
   for (const [name, t] of Object.entries(TOOLS)) {
-    console.log(`  ${name.padEnd(13)} ${t.summary}`);
+    console.log(`  ${name.padEnd(9)} ${t.summary}`);
   }
   console.log("");
 }

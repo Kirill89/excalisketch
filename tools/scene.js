@@ -6,18 +6,17 @@ import { dirname } from "node:path";
 export const SOURCE = "https://github.com/Kirill89/excalisketch";
 
 export const AI_HINT =
-  "This is an Excalidraw diagram (JSON). You can edit it directly for simple " +
-  "tweaks (move, recolor, relabel). For structural changes, prefer the " +
-  "`excalisketch` CLI — it has agent-friendly tools that handle the fiddly " +
-  "bookkeeping (ids, indices, and arrow bindings) so edits don't break. " +
-  "START HERE: run `npx excalisketch --help` for all commands, then " +
-  "`npx excalisketch tool <name> --help` for any tool. " +
-  "Typical tasks: read this diagram as a graph — `npx excalisketch tool graph <file>`; " +
-  "generate from Mermaid or Graphviz DOT — `npx excalisketch tool from-mermaid|from-dot ... --out <file>`; " +
-  "add to an existing diagram — `npx excalisketch tool add-node|add-edge ...`; " +
-  "check your work — `npx excalisketch tool validate <file>`. " +
-  "Gotcha when hand-editing arrows: each arrow must be listed in BOTH endpoint " +
-  "elements' `boundElements` or it silently detaches — run `validate` to catch this. " +
+  "This is an Excalidraw diagram (JSON). This file is large and verbose; the " +
+  "`excalisketch` CLI lets you work with it compactly without loading the whole " +
+  "thing or hand-managing ids/bindings. START HERE: `npx excalisketch --help`, " +
+  "then `npx excalisketch tool <name> --help`. Workflow: " +
+  "`tool view <file>` prints a compact one-line-per-element view (ids, positions, " +
+  "text, edges) — read this instead of the raw JSON; " +
+  "`tool get <file> <id...>` shows full detail (incl. styles) for specific elements; " +
+  "`tool apply <file> <patch.jsonl>` writes edits back by id (change fields, add " +
+  'new elements, or {"id":"X","delete":true}) preserving everything you didn\'t touch; ' +
+  "`tool arrange <file>` auto-lays-out the graph; " +
+  "`tool validate <file>` checks consistency (also run this if you hand-edit the JSON). " +
   "Docs: https://github.com/Kirill89/excalisketch#tools-for-ai-agents. " +
   "(The `source` and `hintForAIAgent` fields are added by excalisketch and are safe to ignore.)";
 
