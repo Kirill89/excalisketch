@@ -3,7 +3,8 @@ import "@excalidraw/excalidraw/index.css";
 import { fetchFile } from "./api.js";
 import { Editor } from "./Editor.jsx";
 
-fetchFile().then(({ scene, mtimeMs }) => {
+fetchFile().then(({ scene, mtimeMs, name }) => {
+  if (name) document.title = `${name} — excalisketch`;
   createRoot(document.getElementById("root")).render(
     <Editor initial={{ scene, mtimeMs }} />,
   );

@@ -2,7 +2,7 @@ import express from "express";
 import { readFile, writeFile, stat } from "node:fs/promises";
 import open from "open";
 import { fileURLToPath } from "node:url";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join, resolve, basename } from "node:path";
 import { normalize, ensureSceneFile } from "./tools/scene.js";
 
 const root = dirname(fileURLToPath(import.meta.url));
@@ -21,7 +21,7 @@ export function startUI(target) {
       readFile(filePath, "utf8"),
       stat(filePath),
     ]);
-    res.json({ content, mtimeMs: s.mtimeMs });
+    res.json({ content, mtimeMs: s.mtimeMs, name: basename(filePath) });
   });
 
   app.get("/api/mtime", async (_req, res) => {

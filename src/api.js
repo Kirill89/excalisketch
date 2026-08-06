@@ -4,8 +4,8 @@ export const POLL_MS = 1500;
 
 export async function fetchFile() {
   const res = await fetch("/api/file");
-  const { content, mtimeMs } = await res.json();
-  return { scene: JSON.parse(content), mtimeMs };
+  const { content, mtimeMs, name } = await res.json();
+  return { scene: JSON.parse(content), mtimeMs, name };
 }
 
 export async function fetchMtime() {
