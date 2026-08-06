@@ -62,7 +62,7 @@ indices, and arrow bindings. They print to stdout and exit.
 npx excalisketch tool                       # list the tools
 npx excalisketch tool view <file>           # whole diagram as compact JSONL (id/type/coords/text/edges)
 npx excalisketch tool get  <file> <id...>   # full element(s), incl. styles
-npx excalisketch tool apply <file> <patch.jsonl | ->   # write edits back by id
+npx excalisketch tool apply <file> <patch.jsonl | '<inline json>'... | ->  # write edits back by id
 npx excalisketch tool arrange <file>        # auto-layout the graph (Graphviz, bundled)
 npx excalisketch tool validate <file>       # check bindings/indices/refs (nonzero exit on problems)
 ```
@@ -72,8 +72,10 @@ The core loop is **view → edit → apply**:
 1. `view` projects each element to one compact line — style dropped, coordinates
    kept, a shape's label folded into its `text`. On a real diagram this is ~8% of
    the raw file, so it fits in context cheaply.
-2. Edit those lines: change a field, add a new element (nodes/edges — ids and
-   bindings are generated for you), or remove one with `{"id":"X","delete":true}`.
+2. Edit those lines (or pass records inline as arguments): change a field, add a
+   new element, or remove one with `{"id":"X","delete":true}`. For a connector,
+   give an arrow only `from`/`to` and omit geometry — the tool positions it;
+   add `points` (3+) only for custom routing.
 3. `apply` merges the patch back **by id**, preserving every field you didn't
    touch (styles, frames, images stay intact), then re-derives all arrow
    bindings and refuses to write if the result is inconsistent.

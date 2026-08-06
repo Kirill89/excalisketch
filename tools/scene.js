@@ -13,10 +13,11 @@ export const AI_HINT =
   "`tool view <file>` prints a compact one-line-per-element view (ids, positions, " +
   "text, edges) — read this instead of the raw JSON; " +
   "`tool get <file> <id...>` shows full detail (incl. styles) for specific elements; " +
-  "`tool apply <file> <patch.jsonl>` merges edits back by id — your fields are " +
-  "written verbatim (including arrow `points`/routing if you set them; omit them and " +
-  "a new edge is drawn straight), and it keeps `boundElements` in sync for you; add " +
-  'new elements, or remove one with {"id":"X","delete":true}; ' +
+  "`tool apply <file> <patch>` merges edits back by id — pass a .jsonl file, inline " +
+  "JSON record(s) as arguments, or stdin. For a connector, give an arrow only " +
+  "`from`/`to` and OMIT x/y/points (the tool positions it); add `points` (3+) only " +
+  "for custom routing. It keeps `boundElements` in sync for you. Add new elements, " +
+  'or remove one with {"id":"X","delete":true}; ' +
   "`tool arrange <file>` auto-lays-out the graph; " +
   "`tool validate <file>` checks consistency (also run this if you hand-edit the JSON). " +
   "Docs: https://github.com/Kirill89/excalisketch#tools-for-ai-agents. " +

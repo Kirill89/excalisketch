@@ -223,6 +223,86 @@ test("apply keeps arrow points/routing the patch provides (no straightening)", a
   ]); // NOT straightened
 });
 
+test("apply accepts inline JSON records (no temp file)", async () => {
+  const file = write([
+    {
+      id: "a",
+      type: "rectangle",
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 60,
+      boundElements: [],
+    },
+  ]);
+  const res = await cli([
+    "tool",
+    "apply",
+    file,
+    '{"id":"b","type":"rectangle","x":200,"y":0,"w":100,"h":60,"text":"B"}',
+  ]);
+  assert.equal(res.code, 0);
+  assert.ok(els(file).some((e) => e.id === "b"));
+});
+
+test("apply gives a bound label center/middle alignment (resize-safe)", async () => {
+  const file = write([
+    {
+      id: "n",
+      type: "ellipse",
+      x: 0,
+      y: 0,
+      width: 140,
+      height: 140,
+      boundElements: [],
+    },
+  ]);
+  // the verbose form that used to render top-left on resize
+  await cli([
+    "tool",
+    "apply",
+    file,
+    '{"id":"t","type":"text","x":10,"y":10,"text":"User","container":"n"}',
+  ]);
+  const t = els(file).find((e) => e.id === "t");
+  assert.equal(t.textAlign, "center");
+  assert.equal(t.verticalAlign, "middle");
+});
+
+test("apply corrects a hand-computed straight (2-point) bound arrow", async () => {
+  const file = write([
+    {
+      id: "a",
+      type: "rectangle",
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 60,
+      boundElements: [],
+    },
+    {
+      id: "b",
+      type: "rectangle",
+      x: 400,
+      y: 0,
+      width: 100,
+      height: 60,
+      boundElements: [],
+    },
+  ]);
+  await cli([
+    "tool",
+    "apply",
+    file,
+    '{"id":"e","type":"arrow","from":"a","to":"b","x":5,"y":5,"points":[[0,0],[10,10]]}',
+  ]);
+  const e = els(file).find((x) => x.id === "e");
+  assert.notDeepEqual(e.points, [
+    [0, 0],
+    [10, 10],
+  ]); // corrected, not trusted
+});
+
 test("apply recomputes geometry for a newly added edge", async () => {
   const file = write([
     {
