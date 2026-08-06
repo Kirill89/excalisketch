@@ -1,10 +1,8 @@
-// The emitter: turns a plain graph model into full, valid Excalidraw elements,
-// owning all the bookkeeping that trips up hand-editing — ids, seeds, bound
-// text labels, and (crucially) arrow bindings mirrored into both endpoints'
-// boundElements. Fractional `index` is intentionally omitted: Excalidraw
-// regenerates it from array order on load, which avoids collisions.
+// Element construction + a reconcile pass. `apply`/`arrange` set the semantic
+// fields (from/to, containerId, positions) and then call reconcile(), which
+// rebuilds arrow geometry and every boundElements list from scratch — so the
+// result is always internally consistent without incremental bookkeeping.
 import { randomBytes } from "node:crypto";
-import { emptyScene } from "./scene.js";
 
 const genId = () => randomBytes(16).toString("base64url").slice(0, 21);
 const rnd = () => Math.floor(Math.random() * 2 ** 31);
@@ -36,16 +34,51 @@ function base() {
   };
 }
 
-// Rough label metrics (no font available in Node). Excalidraw's autoResize
-// refits the text on load; we only need a sensible box.
-function labelSize(text) {
+// Generic element with sane defaults — for new text/frame/other from `apply`.
+export function newElement(type, fields = {}) {
+  return {
+    ...base(),
+    id: genId(),
+    type,
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
+    ...fields,
+  };
+}
+
+export function labelSize(text) {
   const lines = String(text).split("\n");
   const w = Math.max(1, ...lines.map((l) => l.length)) * FONT_SIZE * 0.6;
   const h = lines.length * FONT_SIZE * LINE_HEIGHT;
   return { w, h };
 }
 
-// Build a node (shape + optional bound text label).
+// A text element bound to a container shape (label).
+export function makeLabel(containerEl, text) {
+  const { w, h } = labelSize(text);
+  return {
+    ...base(),
+    id: genId(),
+    type: "text",
+    x: containerEl.x + (containerEl.width - w) / 2,
+    y: containerEl.y + (containerEl.height - h) / 2,
+    width: w,
+    height: h,
+    text: String(text),
+    fontSize: FONT_SIZE,
+    fontFamily: 5,
+    textAlign: "center",
+    verticalAlign: "middle",
+    containerId: containerEl.id,
+    originalText: String(text),
+    autoResize: true,
+    lineHeight: LINE_HEIGHT,
+  };
+}
+
+// A node shape; returns [shape] or [shape, label] if a label is given.
 export function buildNode({
   id = genId(),
   shape = "rectangle",
@@ -55,10 +88,8 @@ export function buildNode({
   w,
   h,
 }) {
-  const size = labelSize(label || " ");
-  const width = w ?? Math.max(120, size.w + 40);
+  const width = w ?? Math.max(120, labelSize(label || " ").w + 40);
   const height = h ?? 60;
-
   const shapeEl = {
     ...base(),
     id,
@@ -70,126 +101,91 @@ export function buildNode({
     roundness: shape === "rectangle" ? { type: 3 } : null,
   };
   const elements = [shapeEl];
-
-  if (label) {
-    const textId = genId();
-    const { w: tw, h: th } = size;
-    elements.push({
-      ...base(),
-      id: textId,
-      type: "text",
-      x: x + (width - tw) / 2,
-      y: y + (height - th) / 2,
-      width: tw,
-      height: th,
-      text: String(label),
-      fontSize: FONT_SIZE,
-      fontFamily: 5,
-      textAlign: "center",
-      verticalAlign: "middle",
-      containerId: id,
-      originalText: String(label),
-      autoResize: true,
-      lineHeight: LINE_HEIGHT,
-    });
-    shapeEl.boundElements = [{ type: "text", id: textId }];
-  }
-
-  return { id, shapeEl, elements };
+  if (label) elements.push(makeLabel(shapeEl, label));
+  return { shapeEl, elements };
 }
 
-// Build an arrow between two existing element objects, mirroring the binding
-// into both endpoints' boundElements (mutates fromEl/toEl in place).
-export function buildArrow({
-  id = genId(),
-  fromEl,
-  toEl,
-  label = "",
-  directed = true,
-}) {
-  const start = {
-    x: fromEl.x + fromEl.width / 2,
-    y: fromEl.y + fromEl.height / 2,
-  };
-  const end = { x: toEl.x + toEl.width / 2, y: toEl.y + toEl.height / 2 };
-  const dx = end.x - start.x;
-  const dy = end.y - start.y;
-
-  const arrow = {
+// A bare arrow element bound to two endpoints (geometry filled by reconcile).
+export function makeArrow({ id = genId(), from, to, directed = true }) {
+  return {
     ...base(),
     id,
     type: "arrow",
-    x: start.x,
-    y: start.y,
-    width: Math.abs(dx),
-    height: Math.abs(dy),
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
     points: [
       [0, 0],
-      [dx, dy],
+      [0, 0],
     ],
-    startBinding: { elementId: fromEl.id, focus: 0, gap: 4 },
-    endBinding: { elementId: toEl.id, focus: 0, gap: 4 },
+    startBinding: { elementId: from, focus: 0, gap: 4 },
+    endBinding: { elementId: to, focus: 0, gap: 4 },
     startArrowhead: null,
     endArrowhead: directed ? "arrow" : null,
   };
-  const elements = [arrow];
-
-  fromEl.boundElements = [
-    ...(fromEl.boundElements || []),
-    { id, type: "arrow" },
-  ];
-  toEl.boundElements = [...(toEl.boundElements || []), { id, type: "arrow" }];
-
-  if (label) {
-    const textId = genId();
-    const { w: tw, h: th } = labelSize(label);
-    elements.push({
-      ...base(),
-      id: textId,
-      type: "text",
-      x: start.x + dx / 2 - tw / 2,
-      y: start.y + dy / 2 - th / 2,
-      width: tw,
-      height: th,
-      text: String(label),
-      fontSize: FONT_SIZE,
-      fontFamily: 5,
-      textAlign: "center",
-      verticalAlign: "middle",
-      containerId: id,
-      originalText: String(label),
-      autoResize: true,
-      lineHeight: LINE_HEIGHT,
-    });
-    arrow.boundElements = [{ type: "text", id: textId }];
-  }
-
-  return { id, elements };
 }
 
-// Assemble a whole scene from a graph model { nodes, edges }.
-export function emitScene({ nodes = [], edges = [] }) {
-  const scene = emptyScene();
-  const shapeById = new Map();
+function setArrowGeometry(arrow, a, b) {
+  const sx = a.x + a.width / 2;
+  const sy = a.y + a.height / 2;
+  const dx = b.x + b.width / 2 - sx;
+  const dy = b.y + b.height / 2 - sy;
+  arrow.x = sx;
+  arrow.y = sy;
+  arrow.width = Math.abs(dx);
+  arrow.height = Math.abs(dy);
+  arrow.points = [
+    [0, 0],
+    [dx, dy],
+  ];
+}
 
-  for (const n of nodes) {
-    const { shapeEl, elements } = buildNode(n);
-    shapeById.set(n.id ?? shapeEl.id, shapeEl);
-    scene.elements.push(...elements);
+// Drop dangling arrows, recompute arrow geometry from endpoints, and rebuild
+// every boundElements list from containerId / startBinding / endBinding.
+export function reconcile(scene) {
+  let els = (scene.elements || []).filter((e) => !e.isDeleted);
+  const present = new Set(els.map((e) => e.id));
+
+  // arrows pointing at a missing endpoint are dropped
+  els = els.filter((e) => {
+    if (e.type !== "arrow") return true;
+    const s = e.startBinding?.elementId;
+    const t = e.endBinding?.elementId;
+    return (!s || present.has(s)) && (!t || present.has(t));
+  });
+
+  const byId = new Map(els.map((e) => [e.id, e]));
+
+  for (const e of els) {
+    if (e.type === "text" && e.containerId && !byId.has(e.containerId)) {
+      delete e.containerId; // orphaned label -> free text
+    }
   }
 
-  for (const e of edges) {
-    const fromEl = shapeById.get(e.from);
-    const toEl = shapeById.get(e.to);
-    if (!fromEl || !toEl) continue; // skip edges to unknown nodes
-    const { elements } = buildArrow({
-      fromEl,
-      toEl,
-      label: e.label || "",
-      directed: e.directed !== false,
-    });
-    scene.elements.push(...elements);
+  for (const e of els) {
+    if (e.type === "arrow" && e.startBinding && e.endBinding) {
+      const a = byId.get(e.startBinding.elementId);
+      const b = byId.get(e.endBinding.elementId);
+      if (a && b) setArrowGeometry(e, a, b);
+    }
   }
 
+  for (const e of els) e.boundElements = [];
+  for (const e of els) {
+    if (e.type === "text" && e.containerId) {
+      byId.get(e.containerId).boundElements.push({ type: "text", id: e.id });
+    }
+    if (e.type === "arrow") {
+      for (const side of ["startBinding", "endBinding"]) {
+        const id = e[side]?.elementId;
+        if (id && byId.has(id)) {
+          byId.get(id).boundElements.push({ type: "arrow", id: e.id });
+        }
+      }
+    }
+  }
+
+  scene.elements = els;
   return scene;
 }
