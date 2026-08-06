@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { buildNode, reconcile } from "../tools/emit.js";
+import { buildNode, reconcile, recomputeArrows } from "../tools/emit.js";
 
 test("buildNode creates a shape plus a bound label", () => {
   const { shapeEl, elements } = buildNode({ label: "Hi", x: 10, y: 20 });
@@ -10,7 +10,7 @@ test("buildNode creates a shape plus a bound label", () => {
   assert.equal(label.text, "Hi");
 });
 
-test("reconcile rebuilds arrow geometry and both boundElements", () => {
+test("reconcile rebuilds both endpoints' boundElements but NOT geometry", () => {
   const scene = {
     elements: [
       {
@@ -54,7 +54,50 @@ test("reconcile rebuilds arrow geometry and both boundElements", () => {
   const e = scene.elements.find((e) => e.id === "e");
   assert.ok(a.boundElements.some((x) => x.id === "e"));
   assert.ok(b.boundElements.some((x) => x.id === "e"));
-  assert.notDeepEqual(e.points[1], [0, 0]); // geometry recomputed
+  assert.deepEqual(e.points[1], [0, 0]); // geometry left untouched by reconcile
+});
+
+test("recomputeArrows sets geometry from endpoints", () => {
+  const scene = {
+    elements: [
+      {
+        id: "a",
+        type: "rectangle",
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 60,
+        boundElements: [],
+      },
+      {
+        id: "b",
+        type: "rectangle",
+        x: 400,
+        y: 0,
+        width: 100,
+        height: 60,
+        boundElements: [],
+      },
+      {
+        id: "e",
+        type: "arrow",
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0,
+        points: [
+          [0, 0],
+          [0, 0],
+        ],
+        startBinding: { elementId: "a" },
+        endBinding: { elementId: "b" },
+        boundElements: [],
+      },
+    ],
+  };
+  recomputeArrows(scene);
+  const e = scene.elements.find((x) => x.id === "e");
+  assert.notDeepEqual(e.points[1], [0, 0]);
 });
 
 test("reconcile drops an arrow whose endpoint is missing", () => {
