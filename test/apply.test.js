@@ -159,6 +159,70 @@ test("apply accepts full-form field names (width/height/containerId)", async () 
   assert.ok((n.boundElements || []).some((b) => b.id === "t")); // mirrored
 });
 
+test("apply keeps arrow points/routing the patch provides (no straightening)", async () => {
+  const file = write([
+    {
+      id: "a",
+      type: "rectangle",
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 60,
+      boundElements: [{ type: "arrow", id: "e" }],
+    },
+    {
+      id: "b",
+      type: "rectangle",
+      x: 400,
+      y: 0,
+      width: 100,
+      height: 60,
+      boundElements: [{ type: "arrow", id: "e" }],
+    },
+    {
+      id: "e",
+      type: "arrow",
+      x: 100,
+      y: 30,
+      width: 300,
+      height: 0,
+      points: [
+        [0, 0],
+        [300, 0],
+      ],
+      startBinding: { elementId: "a" },
+      endBinding: { elementId: "b" },
+      boundElements: [],
+    },
+  ]);
+  // re-specify the edge with an elbowed, multi-point route (the session's case)
+  const p = patch(
+    file,
+    JSON.stringify({
+      id: "e",
+      type: "arrow",
+      from: "a",
+      to: "b",
+      points: [
+        [0, 0],
+        [0, 120],
+        [300, 120],
+        [300, 0],
+      ],
+      elbowed: true,
+    }),
+  );
+  assert.equal((await cli(["tool", "apply", file, p])).code, 0);
+  const e = els(file).find((x) => x.id === "e");
+  assert.equal(e.elbowed, true); // kept
+  assert.deepEqual(e.points, [
+    [0, 0],
+    [0, 120],
+    [300, 120],
+    [300, 0],
+  ]); // NOT straightened
+});
+
 test("apply recomputes geometry for a newly added edge", async () => {
   const file = write([
     {
