@@ -1,4 +1,5 @@
 import { readFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import { readScene, writeScene } from "./scene.js";
 import {
   buildNode,
@@ -12,13 +13,22 @@ import { validate } from "./validate.js";
 
 const SHAPE_TYPES = new Set(["rectangle", "ellipse", "diamond"]);
 
-// Read the patch from a file, or from stdin when src is "-". Uses async stdin
-// (readFileSync(0) throws EAGAIN on the non-blocking pipe execFile provides).
-async function readSource(src) {
-  if (src !== "-") return readFile(src, "utf8");
-  const chunks = [];
-  for await (const chunk of process.stdin) chunks.push(chunk);
-  return Buffer.concat(chunks).toString("utf8");
+// Resolve the patch text from: inline JSONL arg(s), a file path, or stdin ("-"
+// / nothing). Inline avoids the agent having to write a temp file.
+async function resolvePatch(patchArgs) {
+  if (patchArgs.length === 0 || patchArgs[0] === "-") {
+    const chunks = [];
+    for await (const chunk of process.stdin) chunks.push(chunk);
+    return Buffer.concat(chunks).toString("utf8");
+  }
+  if (
+    patchArgs.length === 1 &&
+    !patchArgs[0].trimStart().startsWith("{") &&
+    existsSync(patchArgs[0])
+  ) {
+    return readFile(patchArgs[0], "utf8");
+  }
+  return patchArgs.join("\n"); // one or more inline JSON records
 }
 
 // Accept both the compact schema (what `view` emits) and full-form field names
@@ -33,8 +43,10 @@ function normalize(rec) {
   return n;
 }
 
-// Whether the record specifies arrow geometry itself (so we must NOT recompute).
-const hasGeometry = (rec) => Array.isArray(rec.points);
+// True only for real multi-segment routing (3+ points). A plain 2-point
+// "straight" points array is fully determined by the endpoints, so we recompute
+// it correctly rather than trust hand-computed coordinates.
+const hasRouting = (rec) => Array.isArray(rec.points) && rec.points.length >= 3;
 
 // Write arrow-specific fields verbatim: honor a full binding object (with
 // fixedPoint/mode) if given, else build a simple binding from from/to; keep any
@@ -118,13 +130,16 @@ function createNew(scene, rec) {
   };
   if (rec.type === "frame") fields.name = rec.name || "";
   if (rec.type === "text") {
+    // A text bound to a container is a label: it MUST be center/middle or it
+    // renders correctly at first but jumps to the corner on resize.
+    const labelled = rec.container != null;
     Object.assign(fields, {
       text: rec.text || "",
       originalText: rec.text || "",
-      fontSize: 20,
-      fontFamily: 5,
-      textAlign: "left",
-      verticalAlign: "top",
+      fontSize: rec.fontSize ?? 20,
+      fontFamily: rec.fontFamily ?? 5,
+      textAlign: rec.textAlign ?? (labelled ? "center" : "left"),
+      verticalAlign: rec.verticalAlign ?? (labelled ? "middle" : "top"),
       autoResize: true,
       lineHeight: 1.25,
       containerId: rec.container ?? null,
@@ -134,15 +149,17 @@ function createNew(scene, rec) {
 }
 
 export const summary =
-  'apply JSONL edits back to the file (merge by id; {"delete":true} to remove)';
+  'merge JSONL edits back by id (fields verbatim; {"delete":true} to remove)';
 export const usage =
-  "excalisketch tool apply <file.excalidraw> [patch.jsonl | -]";
+  "excalisketch tool apply <file> [ <file.jsonl> | '<inline json>'... | - ]";
 
 export async function run(args) {
-  const [file, src = "-"] = args.filter((a) => !a.startsWith("-"));
+  const [file, ...patchArgs] = args.filter(
+    (a) => a === "-" || !a.startsWith("--"),
+  );
   if (!file) throw new Error(`usage: ${usage}`);
 
-  const records = (await readSource(src))
+  const records = (await resolvePatch(patchArgs))
     .split("\n")
     .map((l) => l.trim())
     .filter(Boolean)
@@ -175,10 +192,10 @@ export async function run(args) {
     if (el) {
       const rebinds =
         el.type === "arrow" && (rec.from !== undefined || rec.to !== undefined);
-      if (rebinds && !hasGeometry(rec)) needStraight.add(el.id);
+      if (rebinds && !hasRouting(rec)) needStraight.add(el.id);
       updateExisting(scene, el, rec);
     } else {
-      if (rec.type === "arrow" && !hasGeometry(rec)) needStraight.add(rec.id);
+      if (rec.type === "arrow" && !hasRouting(rec)) needStraight.add(rec.id);
       createNew(scene, rec);
     }
   }
