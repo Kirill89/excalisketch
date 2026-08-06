@@ -30,9 +30,16 @@ export default [
     },
   },
 
-  // Node scripts (server + build).
+  // Node scripts (server + build + CLI + tools).
   {
-    files: ["server.js", "build.mjs", "eslint.config.js"],
+    files: [
+      "server.js",
+      "build.mjs",
+      "eslint.config.js",
+      "bin/**/*.js",
+      "tools/**/*.js",
+      "test/**/*.js",
+    ],
     languageOptions: { globals: globals.node },
   },
 

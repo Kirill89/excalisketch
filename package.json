@@ -1,12 +1,14 @@
 {
   "name": "excalisketch",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Local Excalidraw editor for a single file — edit in your browser while an AI agent (or any tool) edits the same file on disk, with live two-way sync.",
   "type": "module",
   "bin": {
-    "excalisketch": "server.js"
+    "excalisketch": "bin/cli.js"
   },
   "files": [
+    "bin/",
+    "tools/",
     "server.js",
     "public/index.html",
     "public/bundle.js",
@@ -18,7 +20,8 @@
   },
   "scripts": {
     "build": "node build.mjs",
-    "ui": "node build.mjs && node server.js",
+    "ui": "node build.mjs && node bin/cli.js",
+    "test": "node --test",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
@@ -45,7 +48,10 @@
     "url": "https://github.com/Kirill89/excalisketch/issues"
   },
   "dependencies": {
+    "@excalidraw/mermaid-to-excalidraw": "^2.2.2",
+    "@viz-js/viz": "^3.29.0",
     "express": "^5.2.1",
+    "jsdom": "^30.0.1",
     "open": "^11.0.0"
   },
   "devDependencies": {

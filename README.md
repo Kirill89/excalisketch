@@ -52,6 +52,31 @@ When excalisketch saves, it adds two fields to the file:
 
 Both are ignored by Excalidraw and safe to remove.
 
+### Tools for AI agents
+
+Editing raw `.excalidraw` JSON by hand is error-prone — arrow bindings must be
+mirrored into both endpoints, ids/indices fabricated, text measured. Instead,
+run the headless tools; they own that bookkeeping and print to stdout:
+
+```bash
+npx excalisketch tool                     # list the tools
+npx excalisketch tool graph <file>        # read the diagram as nodes/edges + DOT
+npx excalisketch tool validate <file>     # check bindings/indices/refs (nonzero exit on problems)
+npx excalisketch tool from-mermaid <in.mmd|-> --out <file>   # Mermaid      -> .excalidraw
+npx excalisketch tool from-dot     <in.dot|-> --out <file>   # Graphviz DOT -> .excalidraw
+npx excalisketch tool add-node <file> --label <text> [--shape rectangle|ellipse|diamond] [--near <id>]
+npx excalisketch tool add-edge <file> --from <id> --to <id> [--label <text>] [--undirected]
+```
+
+- **Read** with `graph` — styleless topology + labels, and the equivalent DOT.
+- **Create** with `from-mermaid` / `from-dot` — write the graph in a language
+  you already know; layout and all Excalidraw bookkeeping are generated for you.
+- **Edit** in place with `add-node` / `add-edge` — arrow bindings are mirrored
+  into both endpoints automatically.
+- **Check** with `validate`.
+
+`from-*` create/replace a whole file; `add-*` modify one in place.
+
 ## Development
 
 ```bash
