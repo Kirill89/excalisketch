@@ -3,7 +3,7 @@ import { readFile, writeFile, stat } from "node:fs/promises";
 import open from "open";
 import { fileURLToPath } from "node:url";
 import { dirname, join, resolve } from "node:path";
-import { normalize } from "./tools/scene.js";
+import { normalize, ensureSceneFile } from "./tools/scene.js";
 
 const root = dirname(fileURLToPath(import.meta.url));
 const publicDir = join(root, "public");
@@ -11,6 +11,9 @@ const publicDir = join(root, "public");
 // Launch the browser editor for a single .excalidraw file.
 export function startUI(target) {
   const filePath = resolve(process.cwd(), target);
+  if (ensureSceneFile(filePath)) {
+    console.log(`Created new diagram ${filePath}`);
+  }
   const app = express();
 
   app.get("/api/file", async (_req, res) => {

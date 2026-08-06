@@ -38,7 +38,17 @@ export function toGraph(scene) {
     // only keep arrows that connect two real nodes
     .filter((ed) => nodeIds.has(ed.from) && nodeIds.has(ed.to));
 
-  return { nodes, edges };
+  const frames = els
+    .filter((e) => e.type === "frame")
+    .map((f) => ({
+      id: f.id,
+      name: f.name || "",
+      members: nodes
+        .filter((n) => byId.get(n.id)?.frameId === f.id)
+        .map((n) => n.id),
+    }));
+
+  return { nodes, edges, frames };
 }
 
 // DOT rendering of a graph model (agents read/produce DOT fluently).
