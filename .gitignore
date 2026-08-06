@@ -1,0 +1,17 @@
+node_modules/
+.idea/
+
+# Build output
+public/bundle.js
+public/bundle.css
+public/fonts/
+
+# OS / logs
+.DS_Store
+*.log
+npm-debug.log*
+
+# npm pack output
+*.tgz
+
+sample.excalidraw

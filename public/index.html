@@ -1,0 +1,20 @@
+<title>Excalidraw</title>
+<link
+  rel="icon"
+  href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">✏️</text></svg>'
+/>
+<script>
+  // Fonts are self-hosted; Excalidraw resolves them relative to this path.
+  window.EXCALIDRAW_ASSET_PATH = "/";
+</script>
+<link rel="stylesheet" href="/bundle.css" />
+<style>
+  html, body, #root { margin: 0; height: 100%; }
+  /* Single-file editor: hide the Library (no package option for it).
+     - top-right trigger button
+     - the "Library" tab inside the sidebar (Radix trigger id ends with -trigger-library) */
+  .default-sidebar-trigger,
+  [id$="-trigger-library"] { display: none !important; }
+</style>
+<div id="root"></div>
+<script type="module" src="/bundle.js"></script>
