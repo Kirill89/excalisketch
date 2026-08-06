@@ -1,5 +1,5 @@
 import { readScene, writeScene } from "./scene.js";
-import { reconcile } from "./emit.js";
+import { reconcile, recomputeArrows } from "./emit.js";
 
 const SHAPE_TYPES = new Set(["rectangle", "ellipse", "diamond"]);
 const r = (n) => Math.round(n);
@@ -75,7 +75,8 @@ export async function run(args) {
     }
   }
 
-  reconcile(scene); // recompute arrow geometry for the new positions
+  reconcile(scene);
+  recomputeArrows(scene); // arrange is a full re-layout, so re-route all arrows
   await writeScene(file, scene);
   console.log(`arranged ${nodes.length} nodes`);
 }

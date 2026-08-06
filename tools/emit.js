@@ -126,7 +126,7 @@ export function makeArrow({ id = genId(), from, to, directed = true }) {
   };
 }
 
-function setArrowGeometry(arrow, a, b) {
+export function setArrowGeometry(arrow, a, b) {
   const sx = a.x + a.width / 2;
   const sy = a.y + a.height / 2;
   const dx = b.x + b.width / 2 - sx;
@@ -163,13 +163,9 @@ export function reconcile(scene) {
     }
   }
 
-  for (const e of els) {
-    if (e.type === "arrow" && e.startBinding && e.endBinding) {
-      const a = byId.get(e.startBinding.elementId);
-      const b = byId.get(e.endBinding.elementId);
-      if (a && b) setArrowGeometry(e, a, b);
-    }
-  }
+  // NOTE: existing arrow geometry (points) is intentionally left untouched here
+  // — recomputing it would flatten hand-routed/elbowed arrows and wreck rich
+  // diagrams. Callers use recomputeArrows() for arrows they actually create/move.
 
   for (const e of els) e.boundElements = [];
   for (const e of els) {
@@ -188,4 +184,20 @@ export function reconcile(scene) {
 
   scene.elements = els;
   return scene;
+}
+
+// Recompute geometry for specific arrows (by id set), or all arrows if omitted.
+// Used for arrows we create (apply) or after a re-layout (arrange) — never for
+// arrows the caller didn't touch.
+export function recomputeArrows(scene, ids = null) {
+  const byId = new Map(
+    (scene.elements || []).filter((e) => !e.isDeleted).map((e) => [e.id, e]),
+  );
+  for (const e of scene.elements) {
+    if (e.isDeleted || e.type !== "arrow") continue;
+    if (ids && !ids.has(e.id)) continue;
+    const a = byId.get(e.startBinding?.elementId);
+    const b = byId.get(e.endBinding?.elementId);
+    if (a && b) setArrowGeometry(e, a, b);
+  }
 }

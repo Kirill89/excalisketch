@@ -6,6 +6,7 @@ import {
   makeLabel,
   newElement,
   reconcile,
+  recomputeArrows,
 } from "./emit.js";
 import { validate } from "./validate.js";
 
@@ -20,8 +21,19 @@ async function readSource(src) {
   return Buffer.concat(chunks).toString("utf8");
 }
 
-// Set/replace a shape's bound text label to `text` (creates the text element
-// if the shape has none yet). Returns any newly created element.
+// Accept both the compact schema (what `view` emits) and full-form field names
+// (what an agent might copy from a raw element), so either works.
+function normalize(rec) {
+  const n = { ...rec };
+  if (n.w === undefined) n.w = rec.width;
+  if (n.h === undefined) n.h = rec.height;
+  if (n.container === undefined) n.container = rec.containerId;
+  if (n.from === undefined) n.from = rec.startBinding?.elementId;
+  if (n.to === undefined) n.to = rec.endBinding?.elementId;
+  return n;
+}
+
+// Set/replace a shape's bound text label (creates the text element if needed).
 function setLabel(scene, shape, text) {
   const byId = new Map(scene.elements.map((e) => [e.id, e]));
   const ref = (shape.boundElements || []).find((b) => b.type === "text");
@@ -29,12 +41,9 @@ function setLabel(scene, shape, text) {
   if (existing) {
     existing.text = text;
     existing.originalText = text;
-    return null;
+    return;
   }
-  if (!text) return null;
-  const label = makeLabel(shape, text);
-  scene.elements.push(label);
-  return label;
+  if (text) scene.elements.push(makeLabel(shape, text));
 }
 
 function updateExisting(scene, el, rec) {
@@ -58,8 +67,7 @@ function updateExisting(scene, el, rec) {
     }
     if (rec.container !== undefined) el.containerId = rec.container;
   } else if (rec.text !== undefined) {
-    // shape label
-    setLabel(scene, el, rec.text);
+    setLabel(scene, el, rec.text); // shape label
   }
 }
 
@@ -118,18 +126,21 @@ export async function run(args) {
     .split("\n")
     .map((l) => l.trim())
     .filter(Boolean)
-    .map((l) => JSON.parse(l));
+    .map((l) => normalize(JSON.parse(l)));
 
   const scene = await readScene(file);
   const byId = new Map(scene.elements.map((e) => [e.id, e]));
 
+  // arrows we create or re-bind — only these get their geometry (re)computed
+  const touchedArrows = new Set();
+
   for (const rec of records) {
     if (!rec.id) throw new Error(`record missing id: ${JSON.stringify(rec)}`);
     const el = byId.get(rec.id);
+
     if (rec.delete) {
       if (el) {
         el.isDeleted = true;
-        // drop its bound label too
         for (const b of el.boundElements || []) {
           if (b.type === "text") {
             const t = byId.get(b.id);
@@ -139,15 +150,27 @@ export async function run(args) {
       }
       continue;
     }
-    if (el) updateExisting(scene, el, rec);
-    else createNew(scene, rec);
+
+    if (el) {
+      if (
+        el.type === "arrow" &&
+        (rec.from !== undefined || rec.to !== undefined)
+      ) {
+        touchedArrows.add(el.id);
+      }
+      updateExisting(scene, el, rec);
+    } else {
+      if (rec.type === "arrow") touchedArrows.add(rec.id);
+      createNew(scene, rec);
+    }
   }
 
-  reconcile(scene);
+  reconcile(scene); // rebuild bindings/boundElements, prune dangling
+  recomputeArrows(scene, touchedArrows); // geometry ONLY for arrows we touched
 
   const problems = validate(scene);
   if (problems.length) {
-    console.error(`refusing to write — result is inconsistent:`);
+    console.error("refusing to write — result is inconsistent:");
     for (const p of problems) console.error(`  - ${p}`);
     process.exitCode = 1;
     return;
