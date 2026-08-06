@@ -1,6 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { normalize, AI_HINT, SOURCE } from "../tools/scene.js";
+import { readFileSync, existsSync, mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { normalize, AI_HINT, SOURCE, ensureSceneFile } from "../tools/scene.js";
 
 test("normalize puts the hint first and pins source", () => {
   const out = normalize({
@@ -25,4 +28,22 @@ test("normalize returns the raw string on invalid JSON (never lose a save)", () 
 
 test("normalize output ends with a trailing newline", () => {
   assert.match(normalize({ elements: [] }), /\n$/);
+});
+
+test("ensureSceneFile creates an empty diagram when missing", () => {
+  const dir = mkdtempSync(join(tmpdir(), "excalisketch-"));
+  const file = join(dir, "nested", "new.excalidraw");
+  assert.equal(existsSync(file), false);
+  assert.equal(ensureSceneFile(file), true); // created
+  const obj = JSON.parse(readFileSync(file, "utf8"));
+  assert.equal(obj.type, "excalidraw");
+  assert.equal(Object.keys(obj)[0], "hintForAIAgent");
+  assert.deepEqual(obj.elements, []);
+});
+
+test("ensureSceneFile leaves an existing file untouched", () => {
+  const dir = mkdtempSync(join(tmpdir(), "excalisketch-"));
+  const file = join(dir, "keep.excalidraw");
+  ensureSceneFile(file);
+  assert.equal(ensureSceneFile(file), false); // already exists
 });

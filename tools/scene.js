@@ -1,5 +1,7 @@
 // Shared .excalidraw read/write helpers, used by the UI server and every tool.
 import { readFile, writeFile } from "node:fs/promises";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { dirname } from "node:path";
 
 export const SOURCE = "https://github.com/Kirill89/excalisketch";
 
@@ -54,4 +56,13 @@ export function emptyScene() {
     appState: { viewBackgroundColor: "#ffffff" },
     files: {},
   };
+}
+
+// Create the file with an empty diagram if it doesn't exist yet. Returns true
+// if a new file was created. Lets `excalisketch <new-file>` start a fresh drawing.
+export function ensureSceneFile(file) {
+  if (existsSync(file)) return false;
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, normalize(emptyScene()), "utf8");
+  return true;
 }
