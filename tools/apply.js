@@ -8,6 +8,7 @@ import {
   newElement,
   reconcile,
   recomputeArrows,
+  labelSize,
 } from "./emit.js";
 import { validate } from "./validate.js";
 
@@ -133,10 +134,16 @@ function createNew(scene, rec) {
     // A text bound to a container is a label: it MUST be center/middle or it
     // renders correctly at first but jumps to the corner on resize.
     const labelled = rec.container != null;
+    const fontSize = rec.fontSize ?? 20;
+    // Size from the text if not given — a 0x0 text is invisible in Excalidraw
+    // (it won't auto-fit a zero-size box on load).
+    const size = labelSize(rec.text || " ");
     Object.assign(fields, {
+      width: rec.w ?? Math.round((size.w * fontSize) / 20),
+      height: rec.h ?? Math.round((size.h * fontSize) / 20),
       text: rec.text || "",
       originalText: rec.text || "",
-      fontSize: rec.fontSize ?? 20,
+      fontSize,
       fontFamily: rec.fontFamily ?? 5,
       textAlign: rec.textAlign ?? (labelled ? "center" : "left"),
       verticalAlign: rec.verticalAlign ?? (labelled ? "middle" : "top"),

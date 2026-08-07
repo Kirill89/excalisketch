@@ -4,6 +4,8 @@ A local, single-file [Excalidraw](https://excalidraw.com) editor. Open a
 `.excalidraw` file in your browser and edit it — while an **AI agent** (or any
 other tool) edits the same file on disk. Changes sync live both ways.
 
+![How excalisketch works](https://raw.githubusercontent.com/Kirill89/excalisketch/main/docs/how-it-works.png)
+
 ## Usage
 
 ```bash

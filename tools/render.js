@@ -53,11 +53,15 @@ function drawElement(e) {
       const pts = (e.points || [[0, 0]])
         .map(([px, py]) => `${x + px},${y + py}`)
         .join(" ");
-      const marker =
+      const endM =
         e.type === "arrow" && e.endArrowhead !== null
-          ? ' marker-end="url(#arrow)"'
+          ? ' marker-end="url(#ahE)"'
           : "";
-      return `<polyline points="${pts}" ${stroke(e)} fill="none"${marker}/>`;
+      const startM =
+        e.type === "arrow" && e.startArrowhead != null
+          ? ' marker-start="url(#ahS)"'
+          : "";
+      return `<polyline points="${pts}" ${stroke(e)} fill="none"${startM}${endM}/>`;
     }
     default:
       return `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="none" stroke="#bbb" stroke-dasharray="2 2"/>`;
@@ -94,7 +98,10 @@ export function render(scene) {
     .join("\n  ");
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${minX - pad} ${minY - pad} ${w} ${h}" width="${Math.round(w)}" height="${Math.round(h)}">
-  <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z"/></marker></defs>
+  <defs>
+    <marker id="ahE" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z"/></marker>
+    <marker id="ahS" viewBox="0 0 10 10" refX="2" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M10,0 L0,5 L10,10 z"/></marker>
+  </defs>
   <rect x="${minX - pad}" y="${minY - pad}" width="${w}" height="${h}" fill="${bg}"/>
   ${body}
 </svg>`;

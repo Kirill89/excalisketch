@@ -30,6 +30,7 @@ test("render emits SVG with each element kind", () => {
           [0, 0],
           [100, 0],
         ],
+        startArrowhead: "arrow",
         endArrowhead: "arrow",
       },
       { id: "t", type: "text", x: 10, y: 10, text: "Hi", fontSize: 20 },
@@ -40,7 +41,8 @@ test("render emits SVG with each element kind", () => {
   assert.match(svg, /<ellipse/);
   assert.match(svg, /<rect/);
   assert.match(svg, /<polyline/);
-  assert.match(svg, /marker-end/); // arrowhead
+  assert.match(svg, /marker-end/); // end arrowhead
+  assert.match(svg, /marker-start/); // start arrowhead (bidirectional)
   assert.match(svg, />Hi</);
 });
 

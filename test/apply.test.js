@@ -303,6 +303,31 @@ test("apply corrects a hand-computed straight (2-point) bound arrow", async () =
   ]); // corrected, not trusted
 });
 
+test("apply sizes a new standalone text (0x0 would be invisible in Excalidraw)", async () => {
+  const file = write([
+    {
+      id: "a",
+      type: "rectangle",
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 60,
+      boundElements: [],
+    },
+  ]);
+  await cli([
+    "tool",
+    "apply",
+    file,
+    '{"id":"t","type":"text","x":0,"y":-40,"text":"Title","fontSize":28}',
+  ]);
+  const t = els(file).find((e) => e.id === "t");
+  assert.ok(
+    t.width > 0 && t.height > 0,
+    `text unsized: ${t.width}x${t.height}`,
+  );
+});
+
 test("apply recomputes geometry for a newly added edge", async () => {
   const file = write([
     {
