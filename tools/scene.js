@@ -19,6 +19,8 @@ export const AI_HINT =
   "for custom routing. It keeps `boundElements` in sync for you. Add new elements, " +
   'or remove one with {"id":"X","delete":true}; ' +
   "`tool arrange <file>` auto-lays-out the graph; " +
+  "`tool render <file> --out out.png` renders an image so you can SEE the result " +
+  "(catch overlapping shapes or arrows that miss their targets — the JSON won't show this); " +
   "`tool validate <file>` checks consistency (also run this if you hand-edit the JSON). " +
   "Docs: https://github.com/Kirill89/excalisketch#tools-for-ai-agents. " +
   "(The `source` and `hintForAIAgent` fields are added by excalisketch and are safe to ignore.)";

@@ -4,6 +4,7 @@ import * as get from "./get.js";
 import * as apply from "./apply.js";
 import * as validate from "./validate.js";
 import * as arrange from "./arrange.js";
+import * as render from "./render.js";
 
 const TOOLS = {
   view,
@@ -11,6 +12,7 @@ const TOOLS = {
   apply,
   validate,
   arrange,
+  render,
 };
 
 export function toolNames() {
