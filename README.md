@@ -18,6 +18,8 @@ This starts a local server, opens your browser, and renders the file.
 - **Live sync** — if the file changes on disk (e.g. your agent edited it) it
   reloads automatically. If you have unsaved edits at the same time, a banner
   asks before discarding them (saving keeps your local version).
+- **Auto-shutdown** — close the browser tab and the local server stops itself
+  (after ~90s of no activity), so it doesn't linger in the background.
 
 ### Working with an AI agent
 
