@@ -64,11 +64,12 @@ indices, and arrow bindings. They print to stdout and exit.
 
 ```bash
 npx excalisketch tool                       # list the tools
+npx excalisketch tool new <file>            # create a blank diagram to start from
 npx excalisketch tool view <file>           # whole diagram as compact JSONL (id/type/coords/text/edges)
 npx excalisketch tool get  <file> <id...>   # full element(s), incl. styles
 npx excalisketch tool apply <file> <patch.jsonl | '<inline json>'... | ->  # write edits back by id
 npx excalisketch tool arrange <file>        # auto-layout the graph (Graphviz, bundled)
-npx excalisketch tool render <file> --out out.png  # render to SVG/PNG so you can see the layout
+npx excalisketch tool render <file> --out out.png  # render the real Excalidraw image (PNG/SVG) so you can see it
 npx excalisketch tool validate <file>       # check bindings/indices/refs (nonzero exit on problems)
 ```
 
@@ -85,9 +86,13 @@ The core loop is **view → edit → apply**:
    touch (styles, frames, images stay intact), then re-derives all arrow
    bindings and refuses to write if the result is inconsistent.
 
-Use `get` when you need an element's full detail (e.g. to copy a style), and
-`arrange` when you have topology but no positions. Direct JSON edits are fine
-too — just run `validate` afterward.
+Start a fresh drawing with `new`. Set colors by adding `strokeColor` /
+`backgroundColor` (hex) to any record — they pass through verbatim. Use `get`
+when you need an element's full detail (e.g. to copy a style), and `arrange`
+when you have topology but no positions. `render` produces the real Excalidraw
+image (hand-drawn strokes, fonts, edge-to-edge arrows) as PNG or SVG, so you can
+see exactly what the diagram looks like. Direct JSON edits are fine too — just
+run `validate` afterward.
 
 ## Development
 

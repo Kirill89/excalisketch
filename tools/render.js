@@ -1,116 +1,165 @@
-import { writeFile } from "node:fs/promises";
+import { writeFile, readFile, mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { randomBytes } from "node:crypto";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
 import { readScene } from "./scene.js";
 
-// A small, dependency-free SVG renderer drawn straight from element geometry.
-// It reflects exactly what's stored (e.g. a center-to-center arrow shows up
-// plunging through its shapes), so an agent can *see* layout problems the raw
-// JSON hides. Not pixel-identical to Excalidraw — faithful to geometry.
+// Render the diagram exactly as Excalidraw would — hand-drawn strokes, real
+// fonts, edge-to-edge bound arrows — so you can SEE the result (overlaps,
+// arrows that miss, colors) instead of guessing from JSON.
+//
+// We run Excalidraw's OWN SVG exporter headlessly: a jsdom DOM plus a few stubs
+// it touches (canvas 2d, FontFace, document.fonts, devicePixelRatio) and a
+// fetch shim that serves the self-hosted fonts from public/fonts — so it embeds
+// them as base64, exactly like the UI's "Export to SVG". No browser, no native
+// canvas. PNG is that SVG rasterized with resvg.
 
-const esc = (s) =>
-  String(s).replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
-  );
+const publicDir = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
 
-function stroke(e) {
-  return `stroke="${e.strokeColor || "#1e1e1e"}" stroke-width="${e.strokeWidth || 2}" opacity="${(e.opacity ?? 100) / 100}"`;
-}
-function fill(e) {
-  const bg = e.backgroundColor;
-  return !bg || bg === "transparent" ? 'fill="none"' : `fill="${bg}"`;
-}
+let exportToSvgP; // memoized: DOM setup + bundle import happen once per process.
 
-function drawElement(e) {
-  const x = e.x;
-  const y = e.y;
-  const w = e.width || 0;
-  const h = e.height || 0;
-  switch (e.type) {
-    case "rectangle":
-    case "frame": {
-      const r = e.roundness ? 8 : 0;
-      const dash = e.type === "frame" ? ' stroke-dasharray="4 4"' : "";
-      return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" ${stroke(e)} ${fill(e)}${dash}/>`;
-    }
-    case "ellipse":
-      return `<ellipse cx="${x + w / 2}" cy="${y + h / 2}" rx="${w / 2}" ry="${h / 2}" ${stroke(e)} ${fill(e)}/>`;
-    case "diamond":
-      return `<polygon points="${x + w / 2},${y} ${x + w},${y + h / 2} ${x + w / 2},${y + h} ${x},${y + h / 2}" ${stroke(e)} ${fill(e)}/>`;
-    case "text": {
-      const fs = e.fontSize || 20;
-      const anchor = e.textAlign === "center" ? "middle" : "start";
-      const tx = anchor === "middle" ? x + w / 2 : x;
-      const lines = String(e.text || "").split("\n");
-      return lines
-        .map(
-          (ln, i) =>
-            `<text x="${tx}" y="${y + fs * (0.9 + i * 1.25)}" font-size="${fs}" text-anchor="${anchor}" fill="${e.strokeColor || "#1e1e1e"}" font-family="sans-serif">${esc(ln)}</text>`,
-        )
-        .join("");
-    }
-    case "arrow":
-    case "line": {
-      const pts = (e.points || [[0, 0]])
-        .map(([px, py]) => `${x + px},${y + py}`)
-        .join(" ");
-      const endM =
-        e.type === "arrow" && e.endArrowhead !== null
-          ? ' marker-end="url(#ahE)"'
-          : "";
-      const startM =
-        e.type === "arrow" && e.startArrowhead != null
-          ? ' marker-start="url(#ahS)"'
-          : "";
-      return `<polyline points="${pts}" ${stroke(e)} fill="none"${startM}${endM}/>`;
-    }
-    default:
-      return `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="none" stroke="#bbb" stroke-dasharray="2 2"/>`;
-  }
-}
-
-export function render(scene) {
-  const els = (scene.elements || []).filter(
-    (e) => !e.isDeleted && typeof e.x === "number",
-  );
-  let minX = Infinity;
-  let minY = Infinity;
-  let maxX = -Infinity;
-  let maxY = -Infinity;
-  for (const e of els) {
-    const pts = e.points || [[0, 0]];
-    for (const [px, py] of pts) {
-      minX = Math.min(minX, e.x + Math.min(0, px));
-      minY = Math.min(minY, e.y + Math.min(0, py));
-      maxX = Math.max(maxX, e.x + Math.max(e.width || 0, px));
-      maxY = Math.max(maxY, e.y + Math.max(e.height || 0, py));
+async function loadExporter() {
+  const { JSDOM } = await import("jsdom");
+  const dom = new JSDOM("<!doctype html><html><body></body></html>", {
+    url: "http://localhost/",
+    pretendToBeVisual: true,
+  });
+  globalThis.window = dom.window;
+  globalThis.document = dom.window.document;
+  for (const k of Object.getOwnPropertyNames(dom.window)) {
+    if (k in globalThis) continue;
+    try {
+      globalThis[k] = dom.window[k];
+    } catch {
+      /* getter-only property on window — skip */
     }
   }
-  if (!Number.isFinite(minX)) [minX, minY, maxX, maxY] = [0, 0, 100, 100];
-  const pad = 24;
-  const w = maxX - minX + pad * 2;
-  const h = maxY - minY + pad * 2;
-  const bg = scene.appState?.viewBackgroundColor || "#ffffff";
+  globalThis.devicePixelRatio = 1;
 
-  const body = els
-    .filter((e) => e.type !== "text")
-    .concat(els.filter((e) => e.type === "text")) // text on top
-    .map(drawElement)
-    .join("\n  ");
+  // A fake 2d context: the exporter only needs it to exist (feature checks) and
+  // to measure text — elements already carry their own width/height.
+  const fakeCtx = new Proxy(
+    {
+      measureText: (t) => ({ width: String(t).length * 8 }),
+      fillText() {},
+      filter: "none",
+      canvas: {},
+      font: "",
+    },
+    { get: (o, k) => (k in o ? o[k] : () => {}) },
+  );
+  dom.window.HTMLCanvasElement.prototype.getContext = () => fakeCtx;
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${minX - pad} ${minY - pad} ${w} ${h}" width="${Math.round(w)}" height="${Math.round(h)}">
-  <defs>
-    <marker id="ahE" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z"/></marker>
-    <marker id="ahS" viewBox="0 0 10 10" refX="2" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M10,0 L0,5 L10,10 z"/></marker>
-  </defs>
-  <rect x="${minX - pad}" y="${minY - pad}" width="${w}" height="${h}" fill="${bg}"/>
-  ${body}
-</svg>`;
+  // FontFace must carry its descriptors (unicodeRange) or font-face -> css fails.
+  globalThis.FontFace = class FontFace {
+    constructor(family, source, descriptors = {}) {
+      this.family = family;
+      this.source = source;
+      this.unicodeRange = descriptors.unicodeRange ?? "U+0-10FFFF";
+      this.style = descriptors.style ?? "normal";
+      this.weight = descriptors.weight ?? "normal";
+      this.status = "unloaded";
+    }
+    async load() {
+      this.status = "loaded";
+      return this;
+    }
+  };
+  const fontSet = new Set();
+  Object.defineProperty(dom.window.document, "fonts", {
+    configurable: true,
+    value: {
+      add: (f) => fontSet.add(f),
+      delete: (f) => fontSet.delete(f),
+      has: (f) => fontSet.has(f),
+      load: async () => [],
+      ready: Promise.resolve(),
+      check: () => true,
+      forEach: (cb) => fontSet.forEach(cb),
+      [Symbol.iterator]: () => fontSet[Symbol.iterator](),
+    },
+  });
+
+  // Serve font requests from our self-hosted public/fonts.
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (url, opts) => {
+    const s = String(url);
+    if (/\.woff2?(\?|$)/i.test(s) && s.includes("/fonts/")) {
+      const rel = s.replace(/^.*\/fonts\//, "").replace(/\?.*$/, "");
+      const buf = await readFile(join(publicDir, "fonts", rel));
+      const ab = buf.buffer.slice(
+        buf.byteOffset,
+        buf.byteOffset + buf.byteLength,
+      );
+      return { ok: true, status: 200, arrayBuffer: async () => ab };
+    }
+    if (realFetch) return realFetch(url, opts);
+    throw new Error("unexpected fetch in headless export: " + s);
+  };
+
+  const mod = await import(join(publicDir, "export.mjs"));
+  return mod.exportToSvg;
+}
+
+// Render a scene object to an SVG string, identical to the UI's SVG export.
+async function sceneToSvg(scene) {
+  if (!exportToSvgP) exportToSvgP = loadExporter();
+  const exportToSvg = await exportToSvgP;
+  const svg = await exportToSvg({
+    elements: (scene.elements || []).filter((e) => !e.isDeleted),
+    appState: {
+      ...(scene.appState || {}),
+      exportBackground: true,
+      exportEmbedScene: false,
+      viewBackgroundColor: scene.appState?.viewBackgroundColor || "#ffffff",
+    },
+    files: scene.files || {},
+    exportPadding: 16,
+  });
+  return svg.outerHTML;
+}
+
+// resvg can't decode woff2, so pull the fonts Excalidraw embedded in the SVG,
+// inflate them to TTF and write them to a temp dir. (resvg-js honors fontFiles
+// but silently ignores fontBuffers, so files it is.) Excalidraw subsets each
+// font to just the glyphs used — one face per family, no gaps.
+async function extractFontFiles(svg, dir) {
+  const b64s = [
+    ...svg.matchAll(/url\("?data:[^;]*;base64,([A-Za-z0-9+/=]+)"?\)/g),
+  ].map((m) => m[1]);
+  if (!b64s.length) return [];
+  const { decompress } = await import("wawoff2");
+  const files = [];
+  for (const b64 of b64s) {
+    try {
+      const ttf = Buffer.from(await decompress(Buffer.from(b64, "base64")));
+      const p = join(dir, randomBytes(6).toString("hex") + ".ttf");
+      await writeFile(p, ttf);
+      files.push(p);
+    } catch {
+      /* not woff2 — skip; system fonts cover it */
+    }
+  }
+  return files;
+}
+
+async function toPng(svg) {
+  const { Resvg } = await import("@resvg/resvg-js");
+  const dir = await mkdtemp(join(tmpdir(), "excalisketch-fonts-"));
+  try {
+    const fontFiles = await extractFontFiles(svg, dir);
+    const r = new Resvg(svg, { font: { fontFiles, loadSystemFonts: true } });
+    return r.render().asPng();
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
 }
 
 export const summary =
-  "render the diagram to SVG/PNG so you can see the actual layout";
+  "render the diagram to PNG/SVG (real Excalidraw output) so you can see it";
 export const usage =
-  "excalisketch tool render <file.excalidraw> [--out <file.svg|file.png>]";
+  "excalisketch tool render <file.excalidraw> [--out <file.png|file.svg>]";
 
 export async function run(args) {
   const flagIdx = args.indexOf("--out");
@@ -118,12 +167,10 @@ export async function run(args) {
   const file = args.find((a, i) => !a.startsWith("-") && i !== flagIdx + 1);
   if (!file) throw new Error(`usage: ${usage}`);
 
-  const svg = render(await readScene(file));
+  const svg = await sceneToSvg(await readScene(file));
 
   if (out && out.endsWith(".png")) {
-    const { Resvg } = await import("@resvg/resvg-js");
-    const png = new Resvg(svg).render().asPng();
-    await writeFile(out, png);
+    await writeFile(out, await toPng(svg));
     console.log(`wrote ${out}`);
   } else if (out) {
     await writeFile(out, svg, "utf8");

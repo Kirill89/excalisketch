@@ -1,6 +1,6 @@
 {
   "name": "excalisketch",
-  "version": "1.5.3",
+  "version": "1.6.0",
   "description": "Local Excalidraw editor for a single file — edit in your browser while an AI agent (or any tool) edits the same file on disk, with live two-way sync.",
   "type": "module",
   "bin": {
@@ -13,6 +13,7 @@
     "public/index.html",
     "public/bundle.js",
     "public/bundle.css",
+    "public/export.mjs",
     "public/fonts"
   ],
   "engines": {
@@ -20,6 +21,7 @@
   },
   "scripts": {
     "build": "node build.mjs",
+    "render:docs": "node bin/cli.js tool render docs/how-it-works.excalidraw --out docs/how-it-works.png",
     "ui": "node build.mjs && node bin/cli.js",
     "test": "node --test",
     "lint": "eslint .",
@@ -51,7 +53,9 @@
     "@resvg/resvg-js": "^2.6.2",
     "@viz-js/viz": "^3.29.0",
     "express": "^5.2.1",
-    "open": "^11.0.0"
+    "jsdom": "^29.1.1",
+    "open": "^11.0.0",
+    "wawoff2": "^2.0.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
