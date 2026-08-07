@@ -91,8 +91,10 @@ Start a fresh drawing with `new`. Set colors by adding `strokeColor` /
 when you need an element's full detail (e.g. to copy a style), and `arrange`
 when you have topology but no positions. `render` produces the real Excalidraw
 image (hand-drawn strokes, fonts, edge-to-edge arrows) as PNG or SVG, so you can
-see exactly what the diagram looks like. Direct JSON edits are fine too — just
-run `validate` afterward.
+see exactly what the diagram looks like; it renders headlessly and
+deterministically on any platform, with emoji drawn as monochrome line-art
+(bundled [OpenMoji](https://openmoji.org/), CC BY-SA 4.0). Direct JSON edits are
+fine too — just run `validate` afterward.
 
 ## Development
 

@@ -1,6 +1,6 @@
 {
   "name": "excalisketch",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "description": "Local Excalidraw editor for a single file — edit in your browser while an AI agent (or any tool) edits the same file on disk, with live two-way sync.",
   "type": "module",
   "bin": {
@@ -9,6 +9,7 @@
   "files": [
     "bin/",
     "tools/",
+    "assets/",
     "server.js",
     "public/index.html",
     "public/bundle.js",
