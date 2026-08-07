@@ -1,4 +1,5 @@
 // Registry of agent tools. Each tool exports { summary, usage, run }.
+import * as newTool from "./new.js";
 import * as view from "./view.js";
 import * as get from "./get.js";
 import * as apply from "./apply.js";
@@ -7,6 +8,7 @@ import * as arrange from "./arrange.js";
 import * as render from "./render.js";
 
 const TOOLS = {
+  new: newTool,
   view,
   get,
   apply,
@@ -30,7 +32,11 @@ Records are JSONL — one compact element per line (what \`view\` prints):
 Arrows: for a normal connector give ONLY from/to and OMIT x/y/points — the tool
 positions it between the nodes. Add "points":[[x,y],...] (3+ points) only for
 custom multi-segment routing. Full-form field names (width, containerId,
-startBinding, ...) are also accepted. apply keeps boundElements in sync for you.`;
+startBinding, ...) are also accepted. apply keeps boundElements in sync for you.
+
+Style (optional, on any record): "strokeColor","backgroundColor" (hex),
+"fillStyle","strokeWidth","strokeStyle","roughness","opacity","fontSize". They
+pass through verbatim on create and update. Start a new file with \`tool new\`.`;
 
 export function listTools() {
   console.log("excalisketch agent tools — run: excalisketch tool <name> ...\n");

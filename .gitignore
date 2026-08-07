@@ -4,6 +4,7 @@ node_modules/
 # Build output
 public/bundle.js
 public/bundle.css
+public/export.mjs
 public/fonts/
 
 # OS / logs

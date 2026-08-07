@@ -109,9 +109,51 @@ test("--version prints a semver", async () => {
 
 test("tool lists the new surface", async () => {
   const { stdout } = await cli(["tool"]);
-  for (const name of ["view", "get", "apply", "validate", "arrange"]) {
+  for (const name of [
+    "new",
+    "view",
+    "get",
+    "apply",
+    "validate",
+    "arrange",
+    "render",
+  ]) {
     assert.match(stdout, new RegExp(name));
   }
+});
+
+test("tool new creates a blank valid file and won't overwrite", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "excalisketch-"));
+  const file = join(dir, "fresh.excalidraw");
+  assert.equal((await cli(["tool", "new", file])).code, 0);
+  const scene = JSON.parse(readFileSync(file, "utf8"));
+  assert.equal(scene.type, "excalidraw");
+  assert.equal(scene.elements.length, 0);
+  assert.equal((await cli(["tool", "validate", file])).code, 0);
+  assert.equal((await cli(["tool", "new", file])).code, 1); // refuses to clobber
+});
+
+test("apply honors caller-specified colors on create", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "excalisketch-"));
+  const file = join(dir, "c.excalidraw");
+  await cli(["tool", "new", file]);
+  await apply(
+    file,
+    JSON.stringify({
+      id: "n",
+      type: "rectangle",
+      x: 0,
+      y: 0,
+      w: 120,
+      h: 60,
+      text: "Hi",
+      backgroundColor: "#a5d8ff",
+      strokeColor: "#1971c2",
+    }),
+  );
+  const n = JSON.parse((await cli(["tool", "get", file, "n"])).stdout);
+  assert.equal(n.backgroundColor, "#a5d8ff"); // not dropped to transparent
+  assert.equal(n.strokeColor, "#1971c2");
 });
 
 test("view folds a label into its shape and one-lines each element", async () => {

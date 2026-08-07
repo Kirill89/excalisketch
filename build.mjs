@@ -25,6 +25,23 @@ await esbuild.build({
   logLevel: "info",
 });
 
+// Bundle Excalidraw's SVG exporter for headless (node) use. tools/render.js
+// imports this under jsdom to produce true Excalidraw output without a browser.
+// Fonts stay external (url() refs) — the exporter fetches them at render time.
+await esbuild.build({
+  entryPoints: [join(root, "src/export-entry.js")],
+  bundle: true,
+  minify: true,
+  format: "esm",
+  platform: "node",
+  outfile: join(outdir, "export.mjs"),
+  loader: { ".css": "empty" },
+  external: ["*.woff2", "*.woff", "*.ttf"],
+  conditions: ["production"],
+  define: { "process.env.NODE_ENV": '"production"' },
+  logLevel: "info",
+});
+
 // Self-host Excalidraw fonts so nothing loads from a CDN.
 cpSync(
   join(root, "node_modules/@excalidraw/excalidraw/dist/prod/fonts"),

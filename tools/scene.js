@@ -16,8 +16,9 @@ export const AI_HINT =
   "`tool apply <file> <patch>` merges edits back by id — pass a .jsonl file, inline " +
   "JSON record(s) as arguments, or stdin. For a connector, give an arrow only " +
   "`from`/`to` and OMIT x/y/points (the tool positions it); add `points` (3+) only " +
-  "for custom routing. It keeps `boundElements` in sync for you. Add new elements, " +
-  'or remove one with {"id":"X","delete":true}; ' +
+  "for custom routing. It keeps `boundElements` in sync for you. Set colors with " +
+  "`strokeColor`/`backgroundColor` (hex) on any record — they pass through verbatim. " +
+  'Add new elements, or remove one with {"id":"X","delete":true}; ' +
   "`tool arrange <file>` auto-lays-out the graph; " +
   "`tool render <file> --out out.png` renders an image so you can SEE the result " +
   "(catch overlapping shapes or arrows that miss their targets — the JSON won't show this); " +

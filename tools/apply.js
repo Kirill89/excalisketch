@@ -14,6 +14,30 @@ import { validate } from "./validate.js";
 
 const SHAPE_TYPES = new Set(["rectangle", "ellipse", "diamond"]);
 
+// Style fields we pass through verbatim if the caller sets them, on both create
+// and update — so colors/strokes an agent specifies aren't silently dropped.
+const STYLE_FIELDS = [
+  "strokeColor",
+  "backgroundColor",
+  "fillStyle",
+  "strokeWidth",
+  "strokeStyle",
+  "roughness",
+  "roundness",
+  "opacity",
+  "angle",
+  "fontSize",
+  "fontFamily",
+  "textAlign",
+  "verticalAlign",
+];
+
+function applyStyle(el, rec) {
+  for (const k of STYLE_FIELDS) {
+    if (rec[k] !== undefined) el[k] = rec[k];
+  }
+}
+
 // Resolve the patch text from: inline JSONL arg(s), a file path, or stdin ("-"
 // / nothing). Inline avoids the agent having to write a temp file.
 async function resolvePatch(patchArgs) {
@@ -79,6 +103,7 @@ function setLabel(scene, shape, text) {
 }
 
 function updateExisting(scene, el, rec) {
+  applyStyle(el, rec);
   if (rec.x !== undefined) el.x = rec.x;
   if (rec.y !== undefined) el.y = rec.y;
   if (rec.w !== undefined) el.width = rec.w;
@@ -104,13 +129,14 @@ function createNew(scene, rec) {
   if (rec.type === "arrow") {
     const arrow = makeArrow({ id: rec.id, from: rec.from, to: rec.to });
     applyArrowFields(arrow, rec);
+    applyStyle(arrow, rec);
     if (rec.x !== undefined) arrow.x = rec.x;
     if (rec.y !== undefined) arrow.y = rec.y;
     scene.elements.push(arrow);
     return;
   }
   if (SHAPE_TYPES.has(rec.type)) {
-    const { elements } = buildNode({
+    const { shapeEl, elements } = buildNode({
       id: rec.id,
       shape: rec.type,
       label: rec.text || "",
@@ -119,6 +145,7 @@ function createNew(scene, rec) {
       w: rec.w,
       h: rec.h,
     });
+    applyStyle(shapeEl, rec); // honor caller's colors/stroke on the shape
     scene.elements.push(...elements);
     return;
   }
@@ -152,7 +179,9 @@ function createNew(scene, rec) {
       containerId: rec.container ?? null,
     });
   }
-  scene.elements.push(newElement(rec.type, fields));
+  const el = newElement(rec.type, fields);
+  applyStyle(el, rec);
+  scene.elements.push(el);
 }
 
 export const summary =
