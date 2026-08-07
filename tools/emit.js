@@ -126,13 +126,37 @@ export function makeArrow({ id = genId(), from, to, directed = true }) {
   };
 }
 
-export function setArrowGeometry(arrow, a, b) {
-  const sx = a.x + a.width / 2;
-  const sy = a.y + a.height / 2;
-  const dx = b.x + b.width / 2 - sx;
-  const dy = b.y + b.height / 2 - sy;
-  arrow.x = sx;
-  arrow.y = sy;
+// Point on a shape's boundary in the direction of (tx,ty), pushed out by `gap`
+// so the arrow stops just outside the shape instead of at its center.
+function boundaryPoint(shape, tx, ty, gap) {
+  const cx = shape.x + shape.width / 2;
+  const cy = shape.y + shape.height / 2;
+  const dx = tx - cx;
+  const dy = ty - cy;
+  const len = Math.hypot(dx, dy);
+  if (!len) return { x: cx, y: cy };
+  const ux = dx / len;
+  const uy = dy / len;
+  const rx = shape.width / 2;
+  const ry = shape.height / 2;
+  const s =
+    shape.type === "ellipse"
+      ? 1 / Math.hypot(ux / rx, uy / ry)
+      : Math.min(rx / Math.abs(ux || 1e-9), ry / Math.abs(uy || 1e-9));
+  return { x: cx + ux * (s + gap), y: cy + uy * (s + gap) };
+}
+
+// Straight arrow clipped to both shapes' edges (not center-to-center, which
+// would overlap the shapes).
+export function setArrowGeometry(arrow, a, b, gap = 4) {
+  const ac = { x: a.x + a.width / 2, y: a.y + a.height / 2 };
+  const bc = { x: b.x + b.width / 2, y: b.y + b.height / 2 };
+  const start = boundaryPoint(a, bc.x, bc.y, gap);
+  const end = boundaryPoint(b, ac.x, ac.y, gap);
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  arrow.x = start.x;
+  arrow.y = start.y;
   arrow.width = Math.abs(dx);
   arrow.height = Math.abs(dy);
   arrow.points = [

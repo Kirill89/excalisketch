@@ -100,6 +100,49 @@ test("recomputeArrows sets geometry from endpoints", () => {
   assert.notDeepEqual(e.points[1], [0, 0]);
 });
 
+test("setArrowGeometry clips to shape edges, not centers", () => {
+  const scene = {
+    elements: [
+      {
+        id: "a",
+        type: "ellipse",
+        x: 0,
+        y: 0,
+        width: 140,
+        height: 140,
+        boundElements: [],
+      },
+      {
+        id: "b",
+        type: "rectangle",
+        x: 400,
+        y: 0,
+        width: 120,
+        height: 60,
+        boundElements: [],
+      },
+      {
+        id: "e",
+        type: "arrow",
+        points: [
+          [0, 0],
+          [0, 0],
+        ],
+        startBinding: { elementId: "a" },
+        endBinding: { elementId: "b" },
+        boundElements: [],
+      },
+    ],
+  };
+  recomputeArrows(scene);
+  const e = scene.elements.find((x) => x.id === "e");
+  // source ellipse center is x=70; a proper edge start sits near x≈144, not 70
+  assert.ok(
+    e.x > 130,
+    `arrow start x=${e.x} should be at the edge, not center`,
+  );
+});
+
 test("reconcile drops an arrow whose endpoint is missing", () => {
   const scene = {
     elements: [
