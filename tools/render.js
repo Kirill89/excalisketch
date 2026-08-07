@@ -149,14 +149,18 @@ async function extractFontFiles(svg, dir) {
   return files;
 }
 
-async function toPng(svg) {
+// scale is the raster multiplier, like the UI's 1x/2x/3x export (PNG only).
+async function toPng(svg, scale) {
   const { Resvg } = await import("@resvg/resvg-js");
   const dir = await mkdtemp(join(tmpdir(), "excalisketch-fonts-"));
   try {
     const fontFiles = [...(await extractFontFiles(svg, dir)), emojiFont];
     // loadSystemFonts:false — every glyph comes from a bundled/embedded font, so
     // output is byte-identical across platforms (no OS font dependence).
-    const r = new Resvg(svg, { font: { fontFiles, loadSystemFonts: false } });
+    const r = new Resvg(svg, {
+      font: { fontFiles, loadSystemFonts: false },
+      fitTo: { mode: "zoom", value: scale },
+    });
     return r.render().asPng();
   } finally {
     await rm(dir, { recursive: true, force: true });
@@ -166,19 +170,27 @@ async function toPng(svg) {
 export const summary =
   "render the diagram to PNG/SVG (real Excalidraw output) so you can see it";
 export const usage =
-  "excalisketch tool render <file.excalidraw> [--out <file.png|file.svg>]";
+  "excalisketch tool render <file.excalidraw> [--out <file.png|file.svg>] [--scale 2]";
 
 export async function run(args) {
   const flagIdx = args.indexOf("--out");
   const out = flagIdx >= 0 ? args[flagIdx + 1] : null;
-  const file = args.find((a, i) => !a.startsWith("-") && i !== flagIdx + 1);
+  const scaleIdx = args.indexOf("--scale");
+  const scale = scaleIdx >= 0 ? Number(args[scaleIdx + 1]) : 2; // 2x like the UI
+  if (!Number.isFinite(scale) || scale <= 0)
+    throw new Error("--scale must be a positive number");
+  // indices that are flag *values*, not the file argument
+  const valueIdx = new Set();
+  if (flagIdx >= 0) valueIdx.add(flagIdx + 1);
+  if (scaleIdx >= 0) valueIdx.add(scaleIdx + 1);
+  const file = args.find((a, i) => !a.startsWith("-") && !valueIdx.has(i));
   if (!file) throw new Error(`usage: ${usage}`);
 
   const svg = await sceneToSvg(await readScene(file));
 
   if (out && out.endsWith(".png")) {
-    await writeFile(out, await toPng(svg));
-    console.log(`wrote ${out}`);
+    await writeFile(out, await toPng(svg, scale));
+    console.log(`wrote ${out} (${scale}x)`);
   } else if (out) {
     await writeFile(out, svg, "utf8");
     console.log(`wrote ${out}`);

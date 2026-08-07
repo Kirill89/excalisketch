@@ -69,7 +69,7 @@ npx excalisketch tool view <file>           # whole diagram as compact JSONL (id
 npx excalisketch tool get  <file> <id...>   # full element(s), incl. styles
 npx excalisketch tool apply <file> <patch.jsonl | '<inline json>'... | ->  # write edits back by id
 npx excalisketch tool arrange <file>        # auto-layout the graph (Graphviz, bundled)
-npx excalisketch tool render <file> --out out.png  # render the real Excalidraw image (PNG/SVG) so you can see it
+npx excalisketch tool render <file> --out out.png [--scale 2]  # render the real Excalidraw image (PNG/SVG); PNG defaults to 2x
 npx excalisketch tool validate <file>       # check bindings/indices/refs (nonzero exit on problems)
 ```
 
