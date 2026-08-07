@@ -8,8 +8,8 @@ export const SOURCE = "https://github.com/Kirill89/excalisketch";
 export const AI_HINT =
   "This is an Excalidraw diagram (JSON). This file is large and verbose; the " +
   "`excalisketch` CLI lets you work with it compactly without loading the whole " +
-  "thing or hand-managing ids/bindings. START HERE: `npx excalisketch --help`, " +
-  "then `npx excalisketch tool <name> --help`. Workflow: " +
+  "thing or hand-managing ids/bindings. START HERE: run `npx excalisketch --help` " +
+  "once — it lists every tool and the record format in one place. Workflow: " +
   "`tool view <file>` prints a compact one-line-per-element view (ids, positions, " +
   "text, edges) — read this instead of the raw JSON; " +
   "`tool get <file> <id...>` shows full detail (incl. styles) for specific elements; " +
