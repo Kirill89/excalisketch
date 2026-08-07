@@ -1,0 +1,15 @@
+OpenMoji-black-glyf.ttf
+
+All emojis in this font are designed by OpenMoji – the open-source emoji and
+icon project. It is bundled with excalisketch and used by `tool render` to draw
+emoji as monochrome line-art (so PNG/SVG output is identical on every platform,
+without relying on OS emoji fonts).
+
+License: CC BY-SA 4.0
+https://creativecommons.org/licenses/by-sa/4.0/
+
+Project: https://openmoji.org/
+Source:  https://github.com/hfg-gmuend/openmoji
+
+The font is included unmodified. Only this file (excalisketch) is MIT-licensed;
+the OpenMoji font retains its CC BY-SA 4.0 license.

@@ -15,7 +15,12 @@ import { readScene } from "./scene.js";
 // them as base64, exactly like the UI's "Export to SVG". No browser, no native
 // canvas. PNG is that SVG rasterized with resvg.
 
-const publicDir = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
+const rootDir = join(dirname(fileURLToPath(import.meta.url)), "..");
+const publicDir = join(rootDir, "public");
+// A monochrome emoji font (OpenMoji, CC BY-SA 4.0) so emoji render as black
+// line-art instead of missing boxes. Bundled — not from the OS — so the result
+// is identical on every platform (resvg picks it up via codepoint fallback).
+const emojiFont = join(rootDir, "assets", "OpenMoji-black-glyf.ttf");
 
 let exportToSvgP; // memoized: DOM setup + bundle import happen once per process.
 
@@ -148,8 +153,10 @@ async function toPng(svg) {
   const { Resvg } = await import("@resvg/resvg-js");
   const dir = await mkdtemp(join(tmpdir(), "excalisketch-fonts-"));
   try {
-    const fontFiles = await extractFontFiles(svg, dir);
-    const r = new Resvg(svg, { font: { fontFiles, loadSystemFonts: true } });
+    const fontFiles = [...(await extractFontFiles(svg, dir)), emojiFont];
+    // loadSystemFonts:false — every glyph comes from a bundled/embedded font, so
+    // output is byte-identical across platforms (no OS font dependence).
+    const r = new Resvg(svg, { font: { fontFiles, loadSystemFonts: false } });
     return r.render().asPng();
   } finally {
     await rm(dir, { recursive: true, force: true });

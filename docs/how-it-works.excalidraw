@@ -1,7 +1,8 @@
 {
-  "hintForAIAgent": "This is an Excalidraw diagram (JSON). This file is large and verbose; the `excalisketch` CLI lets you work with it compactly without loading the whole thing or hand-managing ids/bindings. START HERE: run `npx excalisketch --help` once — it lists every tool and the record format in one place. Workflow: `tool view <file>` prints a compact one-line-per-element view (ids, positions, text, edges) — read this instead of the raw JSON; `tool get <file> <id...>` shows full detail (incl. styles) for specific elements; `tool apply <file> <patch>` merges edits back by id — pass a .jsonl file, inline JSON record(s) as arguments, or stdin. For a connector, give an arrow only `from`/`to` and OMIT x/y/points (the tool positions it); add `points` (3+) only for custom routing. It keeps `boundElements` in sync for you. Add new elements, or remove one with {\"id\":\"X\",\"delete\":true}; `tool arrange <file>` auto-lays-out the graph; `tool render <file> --out out.png` renders an image so you can SEE the result (catch overlapping shapes or arrows that miss their targets — the JSON won't show this); `tool validate <file>` checks consistency (also run this if you hand-edit the JSON). Docs: https://github.com/Kirill89/excalisketch#tools-for-ai-agents. (The `source` and `hintForAIAgent` fields are added by excalisketch and are safe to ignore.)",
+  "hintForAIAgent": "This is an Excalidraw diagram (JSON). This file is large and verbose; the `excalisketch` CLI lets you work with it compactly without loading the whole thing or hand-managing ids/bindings. START HERE: run `npx excalisketch --help` once — it lists every tool and the record format in one place. Workflow: `tool view <file>` prints a compact one-line-per-element view (ids, positions, text, edges) — read this instead of the raw JSON; `tool get <file> <id...>` shows full detail (incl. styles) for specific elements; `tool apply <file> <patch>` merges edits back by id — pass a .jsonl file, inline JSON record(s) as arguments, or stdin. For a connector, give an arrow only `from`/`to` and OMIT x/y/points (the tool positions it); add `points` (3+) only for custom routing. It keeps `boundElements` in sync for you. Set colors with `strokeColor`/`backgroundColor` (hex) on any record — they pass through verbatim. Add new elements, or remove one with {\"id\":\"X\",\"delete\":true}; `tool arrange <file>` auto-lays-out the graph; `tool render <file> --out out.png` renders an image so you can SEE the result (catch overlapping shapes or arrows that miss their targets — the JSON won't show this); `tool validate <file>` checks consistency (also run this if you hand-edit the JSON). Docs: https://github.com/Kirill89/excalisketch#tools-for-ai-agents. (The `source` and `hintForAIAgent` fields are added by excalisketch and are safe to ignore.)",
   "type": "excalidraw",
   "version": 2,
+  "source": "https://github.com/Kirill89/excalisketch",
   "elements": [
     {
       "angle": 0,
@@ -16,8 +17,8 @@
       "frameId": null,
       "roundness": null,
       "seed": 1914478927,
-      "version": 1,
-      "versionNonce": 377871331,
+      "version": 198,
+      "versionNonce": 1660399043,
       "isDeleted": false,
       "boundElements": [
         {
@@ -29,15 +30,16 @@
           "id": "e1"
         }
       ],
-      "updated": 1786097929242,
+      "updated": 1786102358938,
       "link": null,
       "locked": false,
       "id": "you",
       "type": "ellipse",
-      "x": 40,
-      "y": 40,
+      "x": 175.3626781887263,
+      "y": 18.968567738732474,
       "width": 120,
-      "height": 60
+      "height": 85,
+      "index": "a0"
     },
     {
       "angle": 0,
@@ -52,28 +54,29 @@
       "frameId": null,
       "roundness": null,
       "seed": 2071333951,
-      "version": 1,
-      "versionNonce": 917792438,
+      "version": 205,
+      "versionNonce": 736296291,
       "isDeleted": false,
       "boundElements": [],
-      "updated": 1786097929242,
+      "updated": 1786102358938,
       "link": null,
       "locked": false,
       "id": "taq3rk3aKqImRIRe4tyC2",
       "type": "text",
-      "x": 82,
-      "y": 57.5,
-      "width": 36,
-      "height": 25,
-      "text": "You",
+      "x": 218.91627467446705,
+      "y": 36.416529538304204,
+      "width": 33.03999328613281,
+      "height": 50,
+      "text": "You\n🤷",
       "fontSize": 20,
       "fontFamily": 5,
       "textAlign": "center",
       "verticalAlign": "middle",
       "containerId": "you",
-      "originalText": "You",
+      "originalText": "You\n🤷",
       "autoResize": true,
-      "lineHeight": 1.25
+      "lineHeight": 1.25,
+      "index": "a1"
     },
     {
       "angle": 0,
@@ -90,8 +93,8 @@
         "type": 3
       },
       "seed": 80255634,
-      "version": 1,
-      "versionNonce": 1354670533,
+      "version": 54,
+      "versionNonce": 1878083395,
       "isDeleted": false,
       "boundElements": [
         {
@@ -107,15 +110,16 @@
           "id": "e2"
         }
       ],
-      "updated": 1786097929242,
+      "updated": 1786102355962,
       "link": null,
       "locked": false,
       "id": "browser",
       "type": "rectangle",
-      "x": 230,
-      "y": 30,
+      "x": 364.7232089645662,
+      "y": 26.50172718547674,
       "width": 180,
-      "height": 70
+      "height": 70,
+      "index": "a2"
     },
     {
       "angle": 0,
@@ -130,18 +134,18 @@
       "frameId": null,
       "roundness": null,
       "seed": 1987807556,
-      "version": 1,
-      "versionNonce": 1864862099,
+      "version": 55,
+      "versionNonce": 1768777443,
       "isDeleted": false,
       "boundElements": [],
-      "updated": 1786097929242,
+      "updated": 1786102355962,
       "link": null,
       "locked": false,
       "id": "5PoFDpkj9gso_H2qAT4q3",
       "type": "text",
-      "x": 248,
-      "y": 40,
-      "width": 144,
+      "x": 395.36326175997635,
+      "y": 36.50172718547674,
+      "width": 118.71989440917969,
       "height": 50,
       "text": "Browser\n(Excalidraw)",
       "fontSize": 20,
@@ -151,7 +155,8 @@
       "containerId": "browser",
       "originalText": "Browser\n(Excalidraw)",
       "autoResize": true,
-      "lineHeight": 1.25
+      "lineHeight": 1.25,
+      "index": "a3"
     },
     {
       "angle": 0,
@@ -168,8 +173,8 @@
         "type": 3
       },
       "seed": 1537347461,
-      "version": 1,
-      "versionNonce": 1803009215,
+      "version": 2,
+      "versionNonce": 1200537165,
       "isDeleted": false,
       "boundElements": [
         {
@@ -185,7 +190,7 @@
           "id": "e3"
         }
       ],
-      "updated": 1786097929242,
+      "updated": 1786102180464,
       "link": null,
       "locked": false,
       "id": "server",
@@ -193,7 +198,8 @@
       "x": 230,
       "y": 170,
       "width": 180,
-      "height": 70
+      "height": 70,
+      "index": "a4"
     },
     {
       "angle": 0,
@@ -208,28 +214,29 @@
       "frameId": null,
       "roundness": null,
       "seed": 287927619,
-      "version": 1,
-      "versionNonce": 1539781187,
+      "version": 4,
+      "versionNonce": 361314637,
       "isDeleted": false,
       "boundElements": [],
-      "updated": 1786097929242,
+      "updated": 1786102442244,
       "link": null,
       "locked": false,
       "id": "Wz91K_8LUdbQTGOa5_lmz",
       "type": "text",
-      "x": 248,
+      "x": 260.8600540161133,
       "y": 180,
-      "width": 144,
+      "width": 118.27989196777344,
       "height": 50,
-      "text": "excalisketch\nlocal server",
+      "text": "excalisketch\nlocal server ",
       "fontSize": 20,
       "fontFamily": 5,
       "textAlign": "center",
       "verticalAlign": "middle",
       "containerId": "server",
-      "originalText": "excalisketch\nlocal server",
+      "originalText": "excalisketch\nlocal server ",
       "autoResize": true,
-      "lineHeight": 1.25
+      "lineHeight": 1.25,
+      "index": "a5"
     },
     {
       "angle": 0,
@@ -246,8 +253,8 @@
         "type": 3
       },
       "seed": 813333749,
-      "version": 1,
-      "versionNonce": 29251028,
+      "version": 140,
+      "versionNonce": 769517731,
       "isDeleted": false,
       "boundElements": [
         {
@@ -263,15 +270,16 @@
           "id": "e5"
         }
       ],
-      "updated": 1786097929242,
+      "updated": 1786102433744,
       "link": null,
       "locked": false,
       "id": "file",
       "type": "rectangle",
-      "x": 470,
-      "y": 170,
-      "width": 180,
-      "height": 70
+      "x": 467.05760566138065,
+      "y": 169.08468130659435,
+      "width": 187.09267498954114,
+      "height": 70,
+      "index": "a6"
     },
     {
       "angle": 0,
@@ -286,18 +294,18 @@
       "frameId": null,
       "roundness": null,
       "seed": 1950630795,
-      "version": 1,
-      "versionNonce": 243767286,
+      "version": 149,
+      "versionNonce": 882076707,
       "isDeleted": false,
       "boundElements": [],
-      "updated": 1786097929242,
+      "updated": 1786102458110,
       "link": null,
       "locked": false,
       "id": "2iwK28ORu_0COpIvIG89L",
       "type": "text",
-      "x": 452,
-      "y": 192.5,
-      "width": 216,
+      "x": 472.7240298260731,
+      "y": 191.58468130659435,
+      "width": 175.75982666015625,
       "height": 25,
       "text": "diagram.excalidraw",
       "fontSize": 20,
@@ -307,7 +315,8 @@
       "containerId": "file",
       "originalText": "diagram.excalidraw",
       "autoResize": true,
-      "lineHeight": 1.25
+      "lineHeight": 1.25,
+      "index": "a7"
     },
     {
       "angle": 0,
@@ -324,8 +333,8 @@
         "type": 3
       },
       "seed": 2138412299,
-      "version": 1,
-      "versionNonce": 1754237234,
+      "version": 2,
+      "versionNonce": 1707298573,
       "isDeleted": false,
       "boundElements": [
         {
@@ -341,7 +350,7 @@
           "id": "e5"
         }
       ],
-      "updated": 1786097929242,
+      "updated": 1786102180464,
       "link": null,
       "locked": false,
       "id": "tools",
@@ -349,7 +358,8 @@
       "x": 710,
       "y": 170,
       "width": 200,
-      "height": 70
+      "height": 70,
+      "index": "a8"
     },
     {
       "angle": 0,
@@ -364,11 +374,11 @@
       "frameId": null,
       "roundness": null,
       "seed": 584015466,
-      "version": 1,
-      "versionNonce": 1360289590,
+      "version": 2,
+      "versionNonce": 1176941635,
       "isDeleted": false,
       "boundElements": [],
-      "updated": 1786097929242,
+      "updated": 1786102180464,
       "link": null,
       "locked": false,
       "id": "7WM7PW1RlSC4-eGGu_0Wc",
@@ -385,7 +395,8 @@
       "containerId": "tools",
       "originalText": "excalisketch tools\n(view/apply/render)",
       "autoResize": true,
-      "lineHeight": 1.25
+      "lineHeight": 1.25,
+      "index": "a9"
     },
     {
       "angle": 0,
@@ -400,8 +411,8 @@
       "frameId": null,
       "roundness": null,
       "seed": 142532343,
-      "version": 1,
-      "versionNonce": 1382613014,
+      "version": 56,
+      "versionNonce": 363265069,
       "isDeleted": false,
       "boundElements": [
         {
@@ -413,15 +424,16 @@
           "id": "e4"
         }
       ],
-      "updated": 1786097929242,
+      "updated": 1786102271146,
       "link": null,
       "locked": false,
       "id": "agent",
       "type": "ellipse",
-      "x": 725,
-      "y": 30,
-      "width": 180,
-      "height": 70
+      "x": 711.8093799251669,
+      "y": 29.88715248985409,
+      "width": 196.5676863043848,
+      "height": 85,
+      "index": "aA"
     },
     {
       "angle": 0,
@@ -436,28 +448,29 @@
       "frameId": null,
       "roundness": null,
       "seed": 2029774661,
-      "version": 1,
-      "versionNonce": 574608913,
+      "version": 62,
+      "versionNonce": 691072653,
       "isDeleted": false,
       "boundElements": [],
-      "updated": 1786097929242,
+      "updated": 1786102271146,
       "link": null,
       "locked": false,
       "id": "7vLDMbxGP86p9lUOSQyin",
       "type": "text",
-      "x": 743,
-      "y": 52.5,
-      "width": 144,
-      "height": 25,
-      "text": "Coding agent",
+      "x": 747.0360993211425,
+      "y": 47.33511428942582,
+      "width": 126.11990356445312,
+      "height": 50,
+      "text": "Coding agent\n🤖",
       "fontSize": 20,
       "fontFamily": 5,
       "textAlign": "center",
       "verticalAlign": "middle",
       "containerId": "agent",
-      "originalText": "Coding agent",
+      "originalText": "Coding agent 🤖",
       "autoResize": true,
-      "lineHeight": 1.25
+      "lineHeight": 1.25,
+      "index": "aB"
     },
     {
       "angle": 0,
@@ -472,27 +485,27 @@
       "frameId": null,
       "roundness": null,
       "seed": 867957202,
-      "version": 1,
-      "versionNonce": 1569168024,
+      "version": 250,
+      "versionNonce": 1174624515,
       "isDeleted": false,
       "boundElements": [],
-      "updated": 1786097929242,
+      "updated": 1786102358938,
       "link": null,
       "locked": false,
       "id": "e1",
       "type": "arrow",
-      "x": 163.93707975479776,
-      "y": 68.54688455102732,
-      "width": 62.06395290302248,
-      "height": 1.4105443841595928,
+      "x": 299.3621318582149,
+      "y": 61.66070197778768,
+      "width": 61.66644791906941,
+      "height": 0.060213026514126966,
       "points": [
         [
           0,
           0
         ],
         [
-          62.06395290302248,
-          -1.4105443841595928
+          61.66644791906941,
+          0.060213026514126966
         ]
       ],
       "startBinding": {
@@ -506,7 +519,9 @@
         "gap": 4
       },
       "startArrowhead": null,
-      "endArrowhead": "arrow"
+      "endArrowhead": "triangle_outline",
+      "index": "aC",
+      "lastCommittedPoint": null
     },
     {
       "angle": 0,
@@ -521,41 +536,43 @@
       "frameId": null,
       "roundness": null,
       "seed": 752521093,
-      "version": 1,
-      "versionNonce": 1911714817,
+      "version": 58,
+      "versionNonce": 1626688035,
       "isDeleted": false,
       "boundElements": [],
-      "updated": 1786097929242,
+      "updated": 1786102355962,
       "link": null,
       "locked": false,
       "id": "e2",
       "type": "arrow",
-      "x": 320,
-      "y": 104,
-      "width": 0,
-      "height": 62,
+      "x": 420.17612007753297,
+      "y": 98.03460525254047,
+      "width": 66.112988913057,
+      "height": 70.43251668039582,
       "points": [
         [
           0,
           0
         ],
         [
-          0,
-          62
+          -66.112988913057,
+          70.43251668039582
         ]
       ],
       "startBinding": {
         "elementId": "browser",
-        "focus": 0,
+        "focus": 0.0016059027777778018,
         "gap": 4
       },
       "endBinding": {
         "elementId": "server",
-        "focus": 0,
+        "focus": -0.0016059027777778018,
         "gap": 4
       },
       "startArrowhead": null,
-      "endArrowhead": "arrow"
+      "endArrowhead": "triangle_outline",
+      "index": "aD",
+      "lastCommittedPoint": null
     },
     {
       "angle": 0,
@@ -570,27 +587,27 @@
       "frameId": null,
       "roundness": null,
       "seed": 880360146,
-      "version": 1,
-      "versionNonce": 1009212403,
+      "version": 143,
+      "versionNonce": 620780515,
       "isDeleted": false,
       "boundElements": [],
-      "updated": 1786097929242,
+      "updated": 1786102433745,
       "link": null,
       "locked": false,
       "id": "e3",
       "type": "arrow",
-      "x": 414,
-      "y": 205,
-      "width": 52,
-      "height": 0,
+      "x": 413.69462918728186,
+      "y": 204.8394655519285,
+      "width": 49.64882640384889,
+      "height": 0.22791446444551866,
       "points": [
         [
           0,
           0
         ],
         [
-          52,
-          0
+          49.64882640384889,
+          -0.22791446444551866
         ]
       ],
       "startBinding": {
@@ -603,8 +620,10 @@
         "focus": 0,
         "gap": 4
       },
-      "startArrowhead": "arrow",
-      "endArrowhead": "arrow"
+      "startArrowhead": "triangle_outline",
+      "endArrowhead": "triangle_outline",
+      "index": "aE",
+      "lastCommittedPoint": null
     },
     {
       "angle": 0,
@@ -619,27 +638,27 @@
       "frameId": null,
       "roundness": null,
       "seed": 344102457,
-      "version": 1,
-      "versionNonce": 1211025601,
+      "version": 56,
+      "versionNonce": 1871549677,
       "isDeleted": false,
       "boundElements": [],
-      "updated": 1786097929242,
+      "updated": 1786102271146,
       "link": null,
       "locked": false,
       "id": "e4",
       "type": "arrow",
-      "x": 813.6073544237821,
-      "y": 103.99407613409964,
-      "width": 2.2145883017324195,
-      "height": 62.00847244851015,
+      "x": 810.0187960770991,
+      "y": 118.88714017951628,
+      "width": 0.023558001132300888,
+      "height": 49.70836605413015,
       "points": [
         [
           0,
           0
         ],
         [
-          -2.2145883017324195,
-          62.00847244851015
+          -0.023558001132300888,
+          49.70836605413015
         ]
       ],
       "startBinding": {
@@ -653,7 +672,9 @@
         "gap": 4
       },
       "startArrowhead": null,
-      "endArrowhead": "arrow"
+      "endArrowhead": "triangle_outline",
+      "index": "aF",
+      "lastCommittedPoint": null
     },
     {
       "angle": 0,
@@ -668,27 +689,27 @@
       "frameId": null,
       "roundness": null,
       "seed": 794256615,
-      "version": 1,
-      "versionNonce": 1561358964,
+      "version": 144,
+      "versionNonce": 552658819,
       "isDeleted": false,
       "boundElements": [],
-      "updated": 1786097929242,
+      "updated": 1786102433745,
       "link": null,
       "locked": false,
       "id": "e5",
       "type": "arrow",
-      "x": 706,
-      "y": 205,
-      "width": 52,
-      "height": 0,
+      "x": 706.2546832897239,
+      "y": 204.8247541341728,
+      "width": 48.390252568552114,
+      "height": 0.21972137940983316,
       "points": [
         [
           0,
           0
         ],
         [
-          -52,
-          0
+          -48.390252568552114,
+          -0.21972137940983316
         ]
       ],
       "startBinding": {
@@ -701,13 +722,17 @@
         "focus": 0,
         "gap": 4
       },
-      "startArrowhead": "arrow",
-      "endArrowhead": "arrow"
+      "startArrowhead": "triangle_outline",
+      "endArrowhead": "triangle_outline",
+      "index": "aG",
+      "lastCommittedPoint": null
     }
   ],
   "appState": {
+    "gridSize": 20,
+    "gridStep": 5,
+    "gridModeEnabled": false,
     "viewBackgroundColor": "#ffffff"
   },
-  "files": {},
-  "source": "https://github.com/Kirill89/excalisketch"
+  "files": {}
 }
