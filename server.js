@@ -16,6 +16,16 @@ export function startUI(target) {
   }
   const app = express();
 
+  // Treat every request as a heartbeat: the browser polls /api/mtime, so if we
+  // stop hearing from it the tab was closed. Window is generous (~90s) because
+  // browsers throttle background tabs to as little as one timer per minute.
+  const idleMs = Number(process.env.EXCALISKETCH_IDLE_MS) || 90_000;
+  let lastSeen = Date.now();
+  app.use((_req, _res, next) => {
+    lastSeen = Date.now();
+    next();
+  });
+
   app.get("/api/file", async (_req, res) => {
     const [content, s] = await Promise.all([
       readFile(filePath, "utf8"),
@@ -46,7 +56,22 @@ export function startUI(target) {
     const url = `http://localhost:${port}/`;
     console.log(`Editing ${filePath}`);
     console.log(`Serving ${url}`);
-    open(url);
+    if (!process.env.EXCALISKETCH_NO_OPEN) open(url);
   });
+
+  // Shut down once the browser stops polling (tab closed). Survives reloads —
+  // the new page resumes polling within a couple seconds, well under the window.
+  const watchdog = setInterval(
+    () => {
+      if (Date.now() - lastSeen > idleMs) {
+        console.log("Browser tab closed — shutting down.");
+        clearInterval(watchdog);
+        server.close(() => process.exit(0));
+      }
+    },
+    Math.min(idleMs, 15_000),
+  );
+  watchdog.unref();
+
   return server;
 }
