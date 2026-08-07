@@ -80,3 +80,18 @@ test("render --out .png writes a real PNG", async () => {
   const bytes = readFileSync(png);
   assert.deepEqual([...bytes.subarray(0, 4)], [0x89, 0x50, 0x4e, 0x47]); // PNG magic
 });
+
+// PNG width lives at byte offset 16 (big-endian) in the IHDR chunk.
+const pngWidth = (buf) => buf.readUInt32BE(16);
+
+test("render defaults to 2x and honors --scale (like the UI's export scale)", async () => {
+  const { dir, file } = fixture();
+  const at = async (name, ...extra) => {
+    const p = join(dir, name);
+    await run(process.execPath, [CLI, "tool", "render", file, "--out", p, ...extra]); // prettier-ignore
+    return pngWidth(readFileSync(p));
+  };
+  const w1 = await at("a.png", "--scale", "1");
+  const w2 = await at("b.png"); // default
+  assert.equal(w2, w1 * 2); // default is 2x
+});
