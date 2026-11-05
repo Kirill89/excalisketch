@@ -6,6 +6,7 @@ import {
 } from "@excalidraw/excalidraw";
 import {
   POLL_MS,
+  ServerGoneError,
   fetchFile,
   fetchMtime,
   saveFile,
@@ -14,11 +15,13 @@ import {
 import { AppMenu } from "./AppMenu.jsx";
 import { SaveStatus } from "./SaveStatus.jsx";
 import { ConflictBanner } from "./ConflictBanner.jsx";
+import { OfflineBanner } from "./OfflineBanner.jsx";
 
 export function Editor({ initial }) {
   const [api, setApi] = useState(null);
   const [dirty, setDirty] = useState(false);
   const [conflict, setConflict] = useState(false);
+  const [offline, setOffline] = useState(false); // server unreachable
 
   // Refs hold values the poll/save closures need without re-subscribing.
   // Baseline is captured from Excalidraw's OWN serialization (first onChange),
@@ -40,7 +43,14 @@ export function Editor({ initial }) {
   const save = async () => {
     if (!api) return;
     const body = currentJSON();
-    knownMtime.current = await saveFile(body);
+    try {
+      knownMtime.current = await saveFile(body);
+    } catch (e) {
+      if (e instanceof ServerGoneError) setOffline(true);
+      api.setToast({ message: `Save failed: ${e.message}`, duration: 4000 });
+      return; // stays dirty so the user knows it never reached disk
+    }
+    setOffline(false);
     savedJSON.current = body;
     setDirty((dirtyRef.current = false));
     setConflict(false); // saving overrides a pending external change (local wins)
@@ -78,6 +88,7 @@ export function Editor({ initial }) {
     const id = setInterval(async () => {
       try {
         const mtimeMs = await fetchMtime();
+        setOffline(false);
         if (mtimeMs <= knownMtime.current) return;
         const { scene } = await fetchFile();
         knownMtime.current = mtimeMs;
@@ -87,8 +98,10 @@ export function Editor({ initial }) {
         } else {
           applyDisk(scene, mtimeMs, "Reloaded from disk");
         }
-      } catch {
-        /* transient read error while the file is mid-write; retry next tick */
+      } catch (e) {
+        // Network failure = server gone; show the banner until it answers again.
+        // Anything else is a transient read error while the file is mid-write.
+        if (e instanceof ServerGoneError) setOffline(true);
       }
     }, POLL_MS);
     return () => clearInterval(id);
@@ -125,7 +138,8 @@ export function Editor({ initial }) {
         <AppMenu onSave={save} />
       </Excalidraw>
 
-      {conflict && (
+      {offline && <OfflineBanner />}
+      {conflict && !offline && (
         <ConflictBanner
           onReload={() => {
             applyDisk(pendingDisk.current, knownMtime.current);
