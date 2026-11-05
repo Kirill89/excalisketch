@@ -22,6 +22,9 @@ This starts a local server, opens your browser, and renders the file.
   asks before discarding them (saving keeps your local version).
 - **Auto-shutdown** — close the browser tab and the local server stops itself
   (after ~90s of no activity), so it doesn't linger in the background.
+- **Server-stopped banner** — if the server is killed (Ctrl+C, terminal
+  closed) while the tab is open, a red banner appears and saves fail loudly,
+  so you don't keep editing into the void. Restart `excalisketch` and reload.
 
 ### Working with an AI agent
 
